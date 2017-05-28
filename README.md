@@ -6,11 +6,11 @@
 
 为了将GraphQL更广泛的应用于各种后台、框架及语言，需借助跨项目和跨组织间的通力合作，而此规范则提供了协作的基准。
 
-如需帮助，可从[社区](http://graphql.org/community/)中寻找资源.
+如需帮助，可从[社区](http://graphql.org/community/)中寻找资源。
 
 ## Getting Started
 
-GraphQL包含类型系统、查询语言、执行语义、静态验证和类型自省等组件.下文将举例描述GraphQL的这些组件。
+GraphQL包含类型系统、查询语言、执行语义、静态验证和类型自省等组件，下文将举例描述GraphQL的这些组件。
 
 这些案例并不复杂，它们仅用于让你在深入了解规范细节或者[GraphQL.js](https://github.com/graphql/graphql-js)参考实现之前，快速入门GraphQL的核心概念。
 
@@ -23,7 +23,7 @@ GraphQL包含类型系统、查询语言、执行语义、静态验证和类型�
 
 最基本的类型是`Human`（人类），表示Luke、Leia、Han等角色。每个角色都会有一个名字，因此我们的类型`Human`也会有个字段`name`，属于"String"类型，并且不为空。于是我们定义`name`字段为不为空的String，用我们将在下文使用的一种简记法表示如下：
 
-```
+```GraphQL
 type Human {
   name: String
 }
@@ -33,7 +33,7 @@ type Human {
 
 通常的API都会给每个对象赋予一个唯一ID，用于重取特定对象，GraphQL中也采用了这种模式，以我们的`Human`类型举例（顺便添加了个String类型的homePlanet字段）。
 
-```
+```GraphQL
 type Human {
   id: String
   name: String
@@ -43,13 +43,13 @@ type Human {
 
 因为我们在讨论星球大站三部曲，所以给每个人物标注出现在哪一部里面吧。首先定义一个枚举型，列举了三部曲的片名。
 
-```
+```GraphQL
 enum Episode { NEWHOPE, EMPIRE, JEDI }
 ```
 
 然后我们给`Human`添加一个字段，用于描述这个人物出场的剧集名称,类型为`Episode`的数组。
 
-```
+```GraphQL
 type Human {
   id: String
   name: String
@@ -60,7 +60,7 @@ type Human {
 
 接着我们引入另一个类型`Droid`（机器人）:
 
-```
+```GraphQL
 type Droid {
   id: String
   name: String
@@ -75,7 +75,7 @@ type Droid {
 
 这样下来，我们的类型系统就变成了这样
 
-```
+```GraphQL
 enum Episode { NEWHOPE, EMPIRE, JEDI }
 
 interface Character {
@@ -102,11 +102,11 @@ type Droid implements Character {
 }
 ```
 
-我们可能有疑问：这些字段能否返回`null`（空）呢？默认情况下，GraphQL的所有类型可以为空，因为获取GraphQL所需要的数据通常需要联络多个服务，它们不见得任何时刻都可用,，当然如果类型系统能够保证特定类型不为空，那就可以将指定类型标上Non Null（非空），在我们的简记法中，在类型后面加一个"!"就行。
+我们可能有疑问：这些字段能否返回`null`（空）呢？默认情况下，GraphQL的所有类型可以为空，因为获取GraphQL所需要的数据通常需要联络多个服务，它们不见得任何时刻都可用，当然如果类型系统能够保证特定类型不为空，那就可以将指定类型标上Non Null（非空），在我们的简记法中，在类型后面加一个"!"就行。
 
 注意，虽然我们现在的实现能够保证多个字段不为空（因为硬编码的），但我们并没有将其标注未非空，因为我们可能将硬编码内容替换为一个后台服务，而这个服务可能就没那么可靠了，所以对应字段可以是可空型，这样在服务出错的时候可以返回空数据，技能给类型系统一定的灵活性，同时也能向客户端通报后台的错误。
 
-```
+```GraphQL
 enum Episode { NEWHOPE, EMPIRE, JEDI }
 
 interface Character {
@@ -137,7 +137,7 @@ type Droid implements Character {
 
 我们来schema(模式)，首先定义个对象类型作为所有查询的基础，按照惯例这个类型的名称是`Query`，它描述类型系统的顶级公开API，我们的案例的`Query`如下：
 
-```
+```GraphQL
 type Query {
   hero(episode: Episode): Character
   human(id: String!): Human
@@ -148,7 +148,7 @@ type Query {
 案例中我们的schema有三个顶级操作:
 
  - `hero`返回`Character`类型，它是《星球大战》的主角;它接受一个可选参数用以获取特定剧集的主角。
- - `human`接受一个非空String型参数，人类的ID，返回这个ID对应的人类。
+ - `human`接受一个非空String型参数（人类的ID），返回这个ID对应的人类。
  - `droid`类似，返回机器人。
 
 这些字段展示了另一个类型系统的特性：字段可以接收参数从而返回特定值。
@@ -157,22 +157,16 @@ type Query {
 
 这个案例只是类型系统的冰山一角，本规范将在"Type System"（类型系统）章节更加深入细致地探讨。GraphQL.js的[type](https://github.com/graphql/graphql-js/blob/master/src/type)（类型）目录包含一套兼容GraphQL类型系统规范的实现代码。
 
-### Query Syntax
+### Query Syntax/查询语法
 
-GraphQL queries declaratively describe what data the issuer wishes
-to fetch from whoever is fulfilling the GraphQL query.
+GraphQL查询语句声明式地描述了"取回什么样的数据"，而不管数据来源，只要数据提供者能满足GraphQL查询语句的要求就行。
 
-For our Star Wars example, the
-[starWarsQueryTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsQuery-test.js)
-file in the GraphQL.js repository contains a number of queries and responses.
-That file is a test file that uses the schema discussed above and a set of
-sample data, located in
-[starWarsData.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsData.js).
-This test file can be run to exercise the reference implementation.
+在我们的《星球大战》案例中, GraphQL.js库的[starWarsQueryTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsQuery-test.js)文件包含一系列查询及返回。
+这是个测试文件，使用了上述的schema和一组样本数据，数据在[starWarsData.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsData.js)。这个测试文件是用于检测参考实现的。
 
-An example query on the above schema would be:
+查询上述schema的样例语句如下：
 
-```
+```GraphQL
 query HeroNameQuery {
   hero {
     name
@@ -180,13 +174,7 @@ query HeroNameQuery {
 }
 ```
 
-The initial line, `query HeroNameQuery`, defines a query with the operation
-name `HeroNameQuery` that starts with the schema's root query type; in this
-case, `Query`. As defined above, `Query` has a `hero` field that returns a
-`Character`, so we'll query for that. `Character` then has a `name` field that
-returns a `String`, so we query for that, completing our query. The result of
-this query would then be:
-
+首行的`query HeroNameQuery`以schema根级类型`Query`起头，定义了一个名为`HeroNameQuery`的查询操作。如上文所述，`Query`拥有一个`hero`字段，返回`Character`类型，这是我们要查的，`Character`具有一个`name`字段，返回`String`类型，这也是我们要查的，这样就完成了一个查询语句。其返回结果可能如下：
 
 ```json
 {
@@ -196,11 +184,9 @@ this query would then be:
 }
 ```
 
-Specifying the `query` keyword and an operation name is only required when a
-GraphQL document defines multiple operations.  We therefore could have written
-the previous query with the query shorthand:
+只有在一个GraphQL文档定义了多个操作的时候，才需要指定`query`关键字和操作名。所以我们上面的查询可以简写为：
 
-```
+```GraphQL
 {
   hero {
     name
@@ -208,11 +194,9 @@ the previous query with the query shorthand:
 }
 ```
 
-Assuming that the backing data for the GraphQL server identified R2-D2 as the
-hero. The response continues to vary based on the request; if we asked for
-R2-D2's ID and friends with this query:
+假设R2-D2被后台数据当成hero，如果我们请求R2-D2的ID和朋友，那么返回值会根据我们的查询变化而变化：
 
-```
+```GraphQL
 query HeroNameAndFriendsQuery {
   hero {
     id
@@ -225,7 +209,7 @@ query HeroNameAndFriendsQuery {
 }
 ```
 
-then we'll get back a response like this:
+返回值会是：
 
 ```json
 {
@@ -250,13 +234,9 @@ then we'll get back a response like this:
 }
 ```
 
-One of the key aspects of GraphQL is its ability to nest queries. In the
-above query, we asked for R2-D2's friends, but we can ask for more information
-about each of those objects. So let's construct a query that asks for R2-D2's
-friends, gets their name and episode appearances, then asks for each of *their*
-friends.
+GraphQL的一个关键特性即是嵌套查询(nested query)。上述案例中，我们查询了R2-D2的friends（朋友），并可以查询了这些对象的进一步信息。我们来构造一个查询语句，用来查询R2-D2和它朋友们的name（名字）和出场episode（剧集）：
 
-```
+```GraphQL
 query NestedQuery {
   hero {
     name
@@ -271,7 +251,7 @@ query NestedQuery {
 }
 ```
 
-which will give us the nested response
+然后会得到这个结果：
 
 ```json
 {
@@ -312,10 +292,9 @@ which will give us the nested response
 }
 ```
 
-The `Query` type above defined a way to fetch a human given their
-ID. We can use it by hardcoding the ID in the query:
+上面的`Query`类型定义了一种通过ID获取human(人类)的信息，我们将ID硬编码再查询语句中：
 
-```
+```GraphQL
 query FetchLukeQuery {
   human(id: "1000") {
     name
@@ -323,7 +302,7 @@ query FetchLukeQuery {
 }
 ```
 
-to get
+得到
 
 ```json
 {
@@ -333,9 +312,9 @@ to get
 }
 ```
 
-Alternately, we could have defined the query to have a query parameter:
+其外我们也可以在查询语句中定义查询参数:
 
-```
+```GraphQL
 query FetchSomeIDQuery($someId: String!) {
   human(id: $someId) {
     name
@@ -343,19 +322,13 @@ query FetchSomeIDQuery($someId: String!) {
 }
 ```
 
-This query is now parameterized by `$someId`; to run it, we must provide
-that ID. If we ran it with `$someId` set to "1000", we would get Luke;
-set to "1002", we would get Han. If we passed an invalid ID here,
-we would get `null` back for the `human`, indicating that no such object
-exists.
+现在查询语句里面有了参数`$someId`，如果想要运行，我们需要提供ID，譬如1000对应Luke，1002对应Han，如果传递的是无效ID，那么就会得到`null`，表示没有哪个对象。
 
-Notice that the key in the response is the name of the field, by default.
-It is sometimes useful to change this key, for clarity or to avoid key
-collisions when fetching the same field with different arguments.
+注意，默认情况下，返回内容的名字和字段名一致，有时候有必要修改键名，以避免键名冲突（譬如以不同参数获取相同字段）。
 
-We can do that with field aliases, as demonstrated in this query:
+我们通过字段别名来实现：
 
-```
+```GraphQL
 query FetchLukeAliased {
   luke: human(id: "1000") {
     name
@@ -363,7 +336,7 @@ query FetchLukeAliased {
 }
 ```
 
-We aliased the result of the `human` field to the key `luke`. Now the response
+我们将`human`字段别名为键名`luke`，于是返回内容：
 is:
 
 ```json
@@ -374,13 +347,11 @@ is:
 }
 ```
 
-Notice the key is "luke" and not "human", as it was in our previous example
-where we did not use the alias.
+注意键名为"luke"而不是"human"，因为它存在前一案例中，所以我们不使用这个别名。
 
-This is particularly useful if we want to use the same field twice
-with different arguments, as in the following query:
+特别是我们想要在一次查询中使用不同参数查询两个相同字段，如下所示：
 
-```
+```GraphQL
 query FetchLukeAndLeiaAliased {
   luke: human(id: "1000") {
     name
@@ -391,8 +362,7 @@ query FetchLukeAndLeiaAliased {
 }
 ```
 
-We aliased the result of the first `human` field to the key
-`luke`, and the second to `leia`. So the result will be:
+我们将第一个`human`字段别名为`luke`，第二个别名为`leia`。得到如下结果：
 
 ```json
 {
@@ -405,10 +375,9 @@ We aliased the result of the first `human` field to the key
 }
 ```
 
-Now imagine we wanted to ask for Luke and Leia's home planets. We could do so
-with this query:
+如果我们想要得到Luke和Leia的home planets（母星），我们可以如下构件查询语句：
 
-```
+```GraphQL
 query DuplicateFields {
   luke: human(id: "1000") {
     name
@@ -421,11 +390,9 @@ query DuplicateFields {
 }
 ```
 
-but we can already see that this could get unwieldy, since we have to add new
-fields to both parts of the query. Instead, we can extract out the common fields
-into a fragment, and include the fragment in the query, like this:
+但是这样写依然不够明智，因为我们在两部分添加了同样的内容。我们提取共同字段，放进一个fragment（片段）里面，然后在查询语句中包含这个片段，就像这样：
 
-```
+```GraphQL
 query UseFragment {
   luke: human(id: "1000") {
     ...HumanFragment
@@ -441,7 +408,7 @@ fragment HumanFragment on Human {
 }
 ```
 
-Both of those queries give this result:
+上述两个查询都会返回一样的结果：
 
 ```json
 {
@@ -456,15 +423,11 @@ Both of those queries give this result:
 }
 ```
 
-The `UseFragment` and `DuplicateFields` queries will both get the same result, but
-`UseFragment` is less verbose; if we wanted to add more fields, we could add
-it to the common fragment rather than copying it into multiple places.
+`UseFragment`和`DuplicateFields`查询都会获得一样的结果，但是`UseFragment`更简洁，如果我们需要获取更多的字段，直接在共有的fragment（片段）中加而不是复制到多个地方。
 
-We defined the type system above, so we know the type of each object
-in the output; the query can ask for that type using the special
-field `__typename`, defined on every object.
+我们之前定义了类型系统，所以我们知道返回值的每一个对象的类型；而查询语句也能通过特殊字段`__typename`来查询每个对象的类型：
 
-```
+```GraphQL
 query CheckTypeOfR2 {
   hero {
     __typename
@@ -473,7 +436,7 @@ query CheckTypeOfR2 {
 }
 ```
 
-Since R2-D2 is a droid, this will return
+因为R2-D2是机器人,所以得到：
 
 ```json
 {
@@ -484,11 +447,9 @@ Since R2-D2 is a droid, this will return
 }
 ```
 
-This was particularly useful because `hero` was defined to return a `Character`,
-which is an interface; we might want to know what concrete type was actually
-returned. If we instead asked for the hero of Episode V:
+因为`hero`返回的类型`Character`是一个接口，所以在这儿这种查询十分有用，如果我们想要知道实际返回的具体类型的话。如果我们想要查询Episode V（第五集）的hero（主角）：
 
-```
+```GraphQL
 query CheckTypeOfLuke {
   hero(episode: EMPIRE) {
     __typename
@@ -497,7 +458,7 @@ query CheckTypeOfLuke {
 }
 ```
 
-We would find that it was Luke, who is a Human:
+于是得到主角是Luke，他是个Human(人类)：
 
 ```json
 {
@@ -508,12 +469,7 @@ We would find that it was Luke, who is a Human:
 }
 ```
 
-As with the type system, this example just scratched the surface of the query
-language. The specification goes into more detail about this topic in the
-"Language" section, and the
-[language](https://github.com/graphql/graphql-js/blob/master/src/language)
-directory in GraphQL.js contains code implementing a
-specification-compliant GraphQL query language parser and lexer.
+跟类型系统一样，这个案例也只是查询语言的冰山一角。本规范的"Language"（语言）章节会有更加深入细致的讨论。GraphQL.js库的[language](https://github.com/graphql/graphql-js/blob/master/src/language)（语言）目录包含了一套兼容GraphQL查询规范的语言分析器和词法分析器。
 
 ### Validation
 
@@ -531,7 +487,7 @@ To start, let's take a complex valid query. This is the `NestedQuery` example
 from the above section, but with the duplicated fields factored out into
 a fragment:
 
-```
+```GraphQL
 query NestedQueryWithFragment {
   hero {
     ...NameAndAppearances
@@ -557,7 +513,7 @@ given type. So as `hero` returns a `Character`, we have to query for a field
 on `Character`. That type does not have a `favoriteSpaceship` field, so this
 query:
 
-```
+```GraphQL
 # INVALID: favoriteSpaceship does not exist on Character
 query HeroSpaceshipQuery {
   hero {
@@ -573,7 +529,7 @@ or an enum, we need to specify what data we want to get back from the field.
 Hero returns a `Character`, and we've been requesting fields like `name` and
 `appearsIn` on it; if we omit that, the query will not be valid:
 
-```
+```GraphQL
 # INVALID: hero is not a scalar, so fields are needed
 query HeroNoFieldsQuery {
   hero
@@ -583,7 +539,7 @@ query HeroNoFieldsQuery {
 Similarly, if a field is a scalar, it doesn't make sense to query for
 additional fields on it, and doing so will make the query invalid:
 
-```
+```GraphQL
 # INVALID: name is a scalar, so fields are not permitted
 query HeroFieldsOnScalarQuery {
   hero {
@@ -599,7 +555,7 @@ in question; when we query for `hero` which returns a `Character`, we
 can only query for fields that exist on `Character`. What happens if we
 want to query for R2-D2s primary function, though?
 
-```
+```GraphQL
 # INVALID: primaryFunction does not exist on Character
 query DroidFieldOnCharacter {
   hero {
@@ -616,7 +572,7 @@ the fragments we introduced earlier to do this. By setting up a fragment defined
 on `Droid` and including it, we ensure that we only query for `primaryFunction`
 where it is defined.
 
-```
+```GraphQL
 query DroidFieldInFragment {
   hero {
     name
@@ -635,7 +591,7 @@ Instead of using a named fragment, we can use an inline fragment; this
 still allows us to indicate the type we are querying on, but without naming
 a separate fragment:
 
-```
+```GraphQL
 query DroidFieldInInlineFragment {
   hero {
     name
@@ -671,7 +627,7 @@ we didn't, we can ask GraphQL, by querying the `__schema` field, always
 available on the root type of a Query. Let's do so now, and ask what types
 are available.
 
-```
+```GraphQL
 query IntrospectionTypeQuery {
   __schema {
     types {
@@ -748,7 +704,7 @@ Now, let's try and figure out a good place to start exploring what queries are
 available. When we designed our type system, we specified what type all queries
 would start at; let's ask the introspection system about that!
 
-```
+```GraphQL
 query IntrospectionQueryTypeQuery {
   __schema {
     queryType {
@@ -781,7 +737,7 @@ It is often useful to examine one specific type. Let's take a look at
 the `Droid` type:
 
 
-```
+```GraphQL
 query IntrospectionDroidTypeQuery {
   __type(name: "Droid") {
     name
@@ -802,7 +758,7 @@ and we get back:
 What if we want to know more about Droid, though? For example, is it
 an interface or an object?
 
-```
+```GraphQL
 query IntrospectionDroidKindQuery {
   __type(name: "Droid") {
     name
@@ -826,7 +782,7 @@ and we get back:
 we asked about `Character` instead:
 
 
-```
+```GraphQL
 query IntrospectionCharacterKindQuery {
   __type(name: "Character") {
     name
@@ -851,7 +807,7 @@ We'd find that it is an interface.
 It's useful for an object to know what fields are available, so let's
 ask the introspection system about `Droid`:
 
-```
+```GraphQL
 query IntrospectionDroidFieldsQuery {
   __type(name: "Droid") {
     name
@@ -924,7 +880,7 @@ Similarly, both `friends` and `appearsIn` have no name, since they are the
 `LIST` wrapper type. We can query for `ofType` on those types, which will
 tell us what these are lists of.
 
-```
+```GraphQL
 query IntrospectionDroidWrappedFieldsQuery {
   __type(name: "Droid") {
     name
@@ -1007,7 +963,7 @@ and we get back:
 Let's end with a feature of the introspection system particularly useful
 for tooling; let's ask the system for documentation!
 
-```
+```GraphQL
 query IntrospectionDroidDescriptionQuery {
   __type(name: "Droid") {
     name
