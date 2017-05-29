@@ -1,4 +1,4 @@
-# Language
+# Language/语言
 
 Clients use the GraphQL query language to make requests to a GraphQL service.
 We refer to these request sources as documents. A document may contain
@@ -11,7 +11,7 @@ grammar which matches patterns of source characters (defined by a
 double-colon `::`).
 
 
-## Source Text
+## Source Text/源文本
 
 SourceCharacter :: /[\u0009\u000A\u000D\u0020-\uFFFF]/
 
@@ -23,7 +23,7 @@ languages, and serialization formats as possible and avoid display issues in
 text editors and source control.
 
 
-### Unicode
+### Unicode/统一码
 
 UnicodeBOM :: "Byte Order Mark (U+FEFF)"
 
@@ -36,7 +36,7 @@ to determine the fact that the text stream is Unicode, what endianness the text
 stream is in, and which of several Unicode encodings to interpret.
 
 
-### White Space
+### White Space/空白区
 
 WhiteSpace ::
   - "Horizontal Tab (U+0009)"
@@ -53,7 +53,7 @@ as white-space, avoiding misinterpretation by text editors and source
 control tools.
 
 
-### Line Terminators
+### Line Terminators/行终止符
 
 LineTerminator ::
   - "New Line (U+000A)"
@@ -70,7 +70,7 @@ offending syntax should use the preceding amount of {LineTerminator} to produce
 the line number.
 
 
-### Comments
+### Comments/注释
 
 Comment :: `#` CommentChar*
 
@@ -88,7 +88,7 @@ line terminator, and have no significance to the semantic meaning of a GraphQL
 query document.
 
 
-### Insignificant Commas
+### Insignificant Commas/无语义逗号
 
 Comma :: ,
 
@@ -103,7 +103,7 @@ of either trailing commas or line-terminators as list delimiters which are both
 often desired for legibility and maintainability of source code.
 
 
-### Lexical Tokens
+### Lexical Tokens/词法记号
 
 Token ::
   - Punctuator
@@ -119,7 +119,7 @@ Tokens are later used as terminal symbols in a GraphQL query document syntactic
 grammars.
 
 
-### Ignored Tokens
+### Ignored Tokens/无语义记号
 
 Ignored ::
   - UnicodeBOM
@@ -139,7 +139,7 @@ white space characters are permitted between the characters defining a
 {FloatValue}.
 
 
-### Punctuators
+### Punctuators/标点
 
 Punctuator :: one of ! $ ( ) ... : = @ [ ] { | }
 
@@ -148,7 +148,7 @@ is a data description language and not a programming language, therefore GraphQL
 lacks the punctuation often used to describe mathematical expressions.
 
 
-### Names
+### Names/命名
 
 Name :: /[_A-Za-z][_0-9A-Za-z]*/
 
@@ -164,7 +164,7 @@ Names in GraphQL are limited to this <acronym>ASCII</acronym> subset of possible
 characters to support interoperation with as many other systems as possible.
 
 
-## Query Document
+## Query Document/查询文档
 
 Document : Definition+
 
@@ -187,7 +187,7 @@ multiple operations to a GraphQL service, the name of the desired operation to
 be executed must also be provided.
 
 
-## Operations
+## Operations/操作
 
 OperationDefinition :
   - OperationType Name? VariableDefinitions? Directives? SelectionSet
@@ -234,7 +234,7 @@ For example, this unnamed query operation is written via query shorthand.
 Note: many examples below will use the query short-hand syntax.
 
 
-## Selection Sets
+## Selection Sets/选择集合
 
 SelectionSet : { Selection+ }
 
@@ -259,7 +259,7 @@ In this query, the `id`, `firstName`, and `lastName` fields form a selection
 set. Selection sets may also contain fragment references.
 
 
-## Fields
+## Fields/字段
 
 Field : Alias? Name Arguments? Directives? SelectionSet?
 
@@ -316,7 +316,7 @@ unique identifier.
 ```
 
 
-## Arguments
+## Arguments/参数
 
 Arguments : ( Argument+ )
 
@@ -371,7 +371,7 @@ These two queries are semantically identical:
 ```
 
 
-## Field Alias
+## Field Alias/字段别名
 
 Alias : Name :
 
@@ -394,7 +394,7 @@ the resulting object will not have duplicate keys:
 
 Which returns the result:
 
-```js
+```json
 {
   "user": {
     "id": 4,
@@ -418,7 +418,7 @@ Since the top level of a query is a field, it also can be given an alias:
 
 Returns the result:
 
-```js
+```json
 {
   "zuck": {
     "id": 4,
@@ -431,7 +431,7 @@ A field's response key is its alias if an alias is provided, and it is
 otherwise the field's name.
 
 
-## Fragments
+## Fragments/片段
 
 FragmentSpread : ... FragmentName Directives?
 
@@ -522,7 +522,7 @@ The queries `noFragments`, `withFragments`, and `withNestedFragments` all
 produce the same response object.
 
 
-### Type Conditions
+### Type Conditions/类型条件
 
 TypeCondition : on NamedType
 
@@ -566,7 +566,7 @@ The `profiles` root field returns a list where each element could be a `Page` or
 present and `likers` will not. Conversely when the result is a `Page`, `likers`
 will be present and `friends` will not.
 
-```js
+```json
 {
   "profiles": [
     {
@@ -582,7 +582,7 @@ will be present and `friends` will not.
 ```
 
 
-### Inline Fragments
+### Inline Fragments/内联片段
 
 InlineFragment : ... TypeCondition? Directives? SelectionSet
 
@@ -628,7 +628,7 @@ query inlineFragmentNoType($expandedInfo: Boolean) {
 ```
 
 
-## Input Values
+## Input Values/输入值
 
 Value[Const] :
   - [~Const] Variable
@@ -648,7 +648,7 @@ If not defined as constant (for example, in {DefaultValue}), input values can be
 specified as a variable. List and inputs objects may also contain variables (unless defined to be constant).
 
 
-### Int Value
+### Int Value/整数值
 
 IntValue :: IntegerPart
 
@@ -665,7 +665,7 @@ NonZeroDigit :: Digit but not `0`
 An Int number is specified without a decimal point or exponent (ex. `1`).
 
 
-### Float Value
+### Float Value/浮点值
 
 FloatValue ::
   - IntegerPart FractionalPart
@@ -684,14 +684,14 @@ A Float number includes either a decimal point (ex. `1.0`) or an exponent
 (ex. `1e50`) or both (ex. `6.0221413e23`).
 
 
-### Boolean Value
+### Boolean Value/布尔值
 
 BooleanValue : one of `true` `false`
 
 The two keywords `true` and `false` represent the two boolean values.
 
 
-### String Value
+### String Value/字符串值
 
 StringValue ::
   - `""`
@@ -750,7 +750,7 @@ StringCharacter :: \ EscapedCharacter
 | `t`               | U+0009          | horizontal tab               |
 
 
-### Null Value
+### Null Value/空值
 
 NullValue : `null`
 
@@ -781,7 +781,7 @@ variables by either providing the a variable value as {null} and not providing
 a variable value at all.
 
 
-### Enum Value
+### Enum Value/枚举值
 
 EnumValue : Name but not `true`, `false` or `null`
 
@@ -791,7 +791,7 @@ contexts where the precise enumeration type is known. Therefore it's not
 necessary to supply an enumeration type name in the literal.
 
 
-### List Value
+### List Value/列表值
 
 ListValue[Const] :
   - [ ]
@@ -818,7 +818,7 @@ ListValue : [ Value+ ]
   * Return {inputList}
 
 
-### Input Object Values
+### Input Object Values/输入对象值
 
 ObjectValue[Const] :
   - { }
@@ -866,7 +866,7 @@ ObjectValue : { ObjectField+ }
   * Return {inputObject}
 
 
-## Variables
+## Variables/变量
 
 Variable : $ Name
 
@@ -903,7 +903,7 @@ request so they may be substituted during execution. If providing JSON for the
 variables' values, we could run this query and request profilePic of
 size `60` width:
 
-```js
+```json
 {
   "devicePicSize": 60
 }
@@ -918,7 +918,7 @@ a variable is referenced in a fragment and is included by an operation that does
 not define that variable, the operation cannot be executed.
 
 
-## Input Types
+## Input Types/输入类型
 
 Type :
   - NamedType
@@ -959,7 +959,7 @@ Type : Type !
   * Return {type}
 
 
-## Directives
+## Directives/指令
 
 Directives : Directive+
 
