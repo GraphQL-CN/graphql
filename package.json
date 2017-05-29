@@ -15,10 +15,17 @@
     "type": "git",
     "url": "http://github.com/facebook/graphql.git"
   },
+  "translation":[
+    {
+      "language":"zh-CN",
+      "type":"git",
+      "url":"https://github.com/jonirrings/graphql.git"
+    }
+  ],
   "scripts": {
     "test": "spec-md spec/GraphQL.md > /dev/null",
     "build": "mkdir -p out; cp node_modules/spec-md/css/* out; spec-md spec/GraphQL.md > out/index.html",
-    "deploy": "npm run build && (cd out && git init && git config user.name \"Travis CI\" && git config user.email \"github@fb.com\" && git add . && git commit -m \"Deploy to GitHub Pages\" && git push --force --quiet \"https://${GH_TOKEN}@github.com/facebook/graphql.git\" master:gh-pages > /dev/null 2>&1)"
+    "deploy": "npm run build && (cd out && git init && git config user.name \"Jonir Rings\" && git config user.email \"peterpuyi@live.cn\" && git add . && git commit -m \"Deploy to GitHub Pages\" && git push --force --quiet \"https://${GH_TOKEN}@github.com/jonirrings/graphql.git\" master:gh-pages > /dev/null 2>&1)"
   },
   "devDependencies": {
     "spec-md": "0.4.7"
