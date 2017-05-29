@@ -547,7 +547,7 @@ query DroidFieldOnCharacter {
 }
 ```
 
-这个查询是无效的，因为Character中不存在primaryFunction字段，我们需要一种方法在`Character`是`Droid`的时候返回`primaryFunction`字段，否则就忽略。我们可以通过上文引入的fragment（片段）来解决这个问题：建立一个只包含`primaryFunction`的`Droid`片段，，然后在查询中引入：
+这个查询是无效的，因为Character中不存在primaryFunction字段，我们需要一种方法在`Character`是`Droid`的时候返回`primaryFunction`字段，否则就忽略。我们可以通过上文引入的fragment（片段）来解决这个问题：建立一个只包含`primaryFunction`的`Droid`片段，然后在查询中引入：
 
 ```GraphQL
 query DroidFieldInFragment {
