@@ -135,7 +135,7 @@ type Droid implements Character {
 
 我们还缺少拼图的最后一块儿：类型系统的入口。
 
-我们来schema(模式)，首先定义个对象类型作为所有查询的基础，按照惯例这个类型的名称是`Query`，它描述类型系统的顶级公开API，我们的案例的`Query`如下：
+我们来定义schema(模式)，首先定义个对象类型作为所有查询的基础，按照惯例这个类型的名称是`Query`，它描述类型系统的顶级公开API，我们的案例的`Query`如下：
 
 ```GraphQL
 type Query {
