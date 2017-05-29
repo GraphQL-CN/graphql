@@ -14,7 +14,7 @@ GraphQL包含类型系统、查询语言、执行语义、静态验证和类型�
 
 这些案例并不复杂，它们仅用于让你在深入了解规范细节或者[GraphQL.js](https://github.com/graphql/graphql-js)参考实现之前，快速入门GraphQL的核心概念。
 
-这些案例~~的前提是我们想要~~使用GraphQL查询《星球大战》三部曲中的人物地点信息。
+这些案例使用GraphQL查询《星球大战》三部曲中的人物地点信息。
 
 ### Type System/类型系统
 
@@ -161,7 +161,7 @@ type Query {
 
 GraphQL查询语句声明式地描述了"取回什么样的数据"，而不管数据来源，只要数据提供者能满足GraphQL查询语句的要求就行。
 
-在我们的《星球大战》案例中, GraphQL.js库的[starWarsQueryTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsQuery-test.js)文件包含一系列查询及返回。
+在我们的《星球大战》案例中, GraphQL.js库的[starWarsQueryTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsQuery-test.js)文件包含若干查询及返回。
 这是个测试文件，使用了上述的schema和一组样本数据，数据在[starWarsData.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsData.js)。这个测试文件是用于检测参考实现的。
 
 查询上述schema的样例语句如下：
@@ -471,21 +471,13 @@ query CheckTypeOfLuke {
 
 跟类型系统一样，这个案例也只是查询语言的冰山一角。本规范的"Language"（语言）章节会有更加深入细致的讨论。GraphQL.js库的[language](https://github.com/graphql/graphql-js/blob/master/src/language)（语言）目录包含了一套兼容GraphQL查询规范的语言分析器和词法分析器。
 
-### Validation
+### Validation/验证
 
-By using the type system, it can be predetermined whether a GraphQL query
-is valid or not. This allows servers and clients to effectively inform
-developers when an invalid query has been created, without having to rely
-on runtime checks.
+通过使用类型系统，你可以预先判定一个GraphQL查询是否有效。这能让服务端和客户端有效地给开发者预先通告当前查询语句是否有效，而不必只能依赖运行时检查。
 
-For our Star Wars example, the file
-[starWarsValidationTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsValidation-test.js)
-contains a number of queries demonstrating various invalidities, and is a test
-file that can be run to exercise the reference implementation's validator.
+我们的《星球大战》案例中，[starWarsValidationTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsValidation-test.js)文件包含了若干使用了验证的查询，这是个测试文件，用于检测参考实现的验证器。
 
-To start, let's take a complex valid query. This is the `NestedQuery` example
-from the above section, but with the duplicated fields factored out into
-a fragment:
+首先，我们构造一个有效的复杂查询，这是来自上文的`NestedQuery`案例，其中的重复字段已经被提取到了一个fragment片段中：
 
 ```GraphQL
 query NestedQueryWithFragment {
@@ -506,15 +498,12 @@ fragment NameAndAppearances on Character {
 }
 ```
 
-And this query is valid. Let's take a look at some invalid queries!
+当然这个查询是有效的。那我们再来看看无效的查询！
 
-When we query for fields, we have to query for a field that exists on the
-given type. So as `hero` returns a `Character`, we have to query for a field
-on `Character`. That type does not have a `favoriteSpaceship` field, so this
-query:
+当我查询某些字段的时候，我们查询存在于某个Type（类型）中的字段，譬如`hero`返回的是`Character`，我们就查询的字段就必须在`Character`内存在。如果查询不存在字段，譬如`favoriteSpaceship`：
 
 ```GraphQL
-# INVALID: favoriteSpaceship does not exist on Character
+# INVALID: favoriteSpaceship does not exist on Character（无效：Character中不存在favoriteSpaceship）
 query HeroSpaceshipQuery {
   hero {
     favoriteSpaceship
@@ -522,25 +511,21 @@ query HeroSpaceshipQuery {
 }
 ```
 
-is invalid.
+这个查询就是无效的了。
 
-Whenever we query for a field and it returns something other than a scalar
-or an enum, we need to specify what data we want to get back from the field.
-Hero returns a `Character`, and we've been requesting fields like `name` and
-`appearsIn` on it; if we omit that, the query will not be valid:
+如果我们查询的字段返回的不是标量或者枚举型，那么还需要指定我们所需要的内部的字段。譬如`hero`返回的是`Character`，我们在之前的案例中请求过了`name`或者`appearsIn`之类的字段。如果我们省略这些，查询就变成无效的了：
 
 ```GraphQL
-# INVALID: hero is not a scalar, so fields are needed
+# INVALID: hero is not a scalar, so fields are needed（无效：hero不是标量，需要提供内部字段）
 query HeroNoFieldsQuery {
   hero
 }
 ```
 
-Similarly, if a field is a scalar, it doesn't make sense to query for
-additional fields on it, and doing so will make the query invalid:
+类似的，如果一个字段是标量，取内部字段也没有意义，那样做会导致查询无效：
 
 ```GraphQL
-# INVALID: name is a scalar, so fields are not permitted
+# INVALID: name is a scalar, so fields are not permitted（无效：name是标量，不允许查询内部字段）
 query HeroFieldsOnScalarQuery {
   hero {
     name {
@@ -550,13 +535,10 @@ query HeroFieldsOnScalarQuery {
 }
 ```
 
-Earlier, it was noted that a query can only query for fields on the type
-in question; when we query for `hero` which returns a `Character`, we
-can only query for fields that exist on `Character`. What happens if we
-want to query for R2-D2s primary function, though?
+之前的案例中，你可能注意到查询语句中的字段只能是被请求类型上的，譬如我们请求的是`hero`，它会返回`Character`，我们就只能查询`Character`上的字段。如果我们要查询R2-D2的primaryFunction（基本功能），那么该怎么构建查询呢？
 
 ```GraphQL
-# INVALID: primaryFunction does not exist on Character
+# INVALID: primaryFunction does not exist on Character（无效，Character中不存在primaryFunction）
 query DroidFieldOnCharacter {
   hero {
     name
@@ -565,12 +547,7 @@ query DroidFieldOnCharacter {
 }
 ```
 
-That query is invalid, because `primaryFunction` is not a field on `Character`.
-We want some way of indicating that we wish to fetch `primaryFunction` if the
-`Character` is a `Droid`, and to ignore that field otherwise. We can use
-the fragments we introduced earlier to do this. By setting up a fragment defined
-on `Droid` and including it, we ensure that we only query for `primaryFunction`
-where it is defined.
+这个查询是无效的，因为Character中不存在primaryFunction字段，我们需要一种方法在`Character`是`Droid`的时候返回`primaryFunction`字段，否则就忽略。我们可以通过上文引入的fragment（片段）来解决这个问题：建立一个只包含`primaryFunction`的`Droid`片段，，然后在查询中引入：
 
 ```GraphQL
 query DroidFieldInFragment {
@@ -585,11 +562,7 @@ fragment DroidFields on Droid {
 }
 ```
 
-This query is valid, but it's a bit verbose; named fragments were valuable
-above when we used them multiple times, but we're only using this one once.
-Instead of using a named fragment, we can use an inline fragment; this
-still allows us to indicate the type we are querying on, but without naming
-a separate fragment:
+这个查询是有效的，但是有些啰嗦， named fragment（具名片段/命名片段）仅仅在多次使用的场景才能发挥作用，但是这儿只使用了一次。换言之，相较于具名片段，我们可以使用inline fragment（内联片段/行内片段），这样我们依然能查询我们需要的类型，但不必单独命名一个片段。
 
 ```GraphQL
 query DroidFieldInInlineFragment {
@@ -602,30 +575,15 @@ query DroidFieldInInlineFragment {
 }
 ```
 
-This has just scratched the surface of the validation system; there
-are a number of validation rules in place to ensure that a GraphQL query
-is semantically meaningful. The specification goes into more detail about this
-topic in the "Validation" section, and the
-[validation](https://github.com/graphql/graphql-js/blob/master/src/validation)
-directory in GraphQL.js contains code implementing a
-specification-compliant GraphQL validator.
+这也只是验证系统的冰山一角，这之外还有很多验证规则来保证一个查询语句的语义性，本规范将在 "Validation"（验证）章节更加深入细致地讨论。GraphQL.js的[validation](https://github.com/graphql/graphql-js/blob/master/src/validation)（验证）目录包含一套兼容GraphQL规范的验证器代码。
 
-### Introspection
+### Introspection/内省
 
-It's often useful to ask a GraphQL schema for information about what
-queries it supports. GraphQL allows us to do so using the introspection
-system!
+我们经常需要知道一个GraphQL schema（模式）支持的所有查询类型，而GraphQL的introspection（内省）系统就是用来完成这个的。
 
-For our Star Wars example, the file
-[starWarsIntrospectionTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsIntrospection-test.js)
-contains a number of queries demonstrating the introspection system, and is a
-test file that can be run to exercise the reference implementation's
-introspection system.
+我们的《星球大战》案例中，[starWarsIntrospectionTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsIntrospection-test.js)文件包含了若干使用了内省系统的查询。这是个测试文件，用于检测参考实现的内省系统。
 
-We designed the type system, so we know what types are available, but if
-we didn't, we can ask GraphQL, by querying the `__schema` field, always
-available on the root type of a Query. Let's do so now, and ask what types
-are available.
+我们定义了类型系统，所以我们知道那些类型是可用的，如果不知道，还可以通过向GraphQL的查询`__schema`字段得到这些，这个字段是一定存在于Query根级类型上的。不妨一试：
 
 ```GraphQL
 query IntrospectionTypeQuery {
@@ -637,7 +595,7 @@ query IntrospectionTypeQuery {
 }
 ```
 
-and we get back:
+然后得到:
 
 ```json
 {
@@ -690,19 +648,14 @@ and we get back:
 }
 ```
 
-Wow, that's a lot of types! What are they? Let's group them:
+有一大堆类型啊，他们都是些啥呢？我们将他们分个组：
 
- - **Query, Character, Human, Episode, Droid** - These are the ones that we
-defined in our type system.
- - **String, Boolean** - These are built-in scalars that the type system
-provided.
+ - **Query, Character, Human, Episode, Droid** - 这是我们在类型系统中定义的类型。
+ - **String, Boolean** - 这是类型系统内置的标量。
  - **__Schema, __Type, __TypeKind, __Field, __InputValue, __EnumValue,
-__Directive** - These all are preceded with a double underscore, indicating
-that they are part of the introspection system.
+__Directive** - 这些都有个双下划线前缀，表明他们都属于内省系统。
 
-Now, let's try and figure out a good place to start exploring what queries are
-available. When we designed our type system, we specified what type all queries
-would start at; let's ask the introspection system about that!
+现在让我们好好开始探讨一下那些查询是可用的吧！我们定义类型系统的时候，指定了所有类型从哪儿开始，看看怎么向内省系统查询：
 
 ```GraphQL
 query IntrospectionQueryTypeQuery {
@@ -714,7 +667,7 @@ query IntrospectionQueryTypeQuery {
 }
 ```
 
-and we get back:
+然后得到了:
 
 ```json
 {
@@ -726,15 +679,9 @@ and we get back:
 }
 ```
 
-And that matches what we said in the type system section, that
-the `Query` type is where we will start! Note that the naming here
-was just by convention; we could have named our `Query` type anything
-else, and it still would have been returned here if we had specified it
-as the starting type for queries. Naming it `Query`, though, is a useful
-convention.
+这符合我们在类型系统中说的`Query`是所有查询的起点，当然这个命名只是惯例，我们也可以将`Query`类型改成其他名字，它依然会返回，只是说`Query`作为约定俗称的惯例，最便于理解。
 
-It is often useful to examine one specific type. Let's take a look at
-the `Droid` type:
+有时候也需要验证特定的类型，不妨看看`Droid`类型：
 
 
 ```GraphQL
@@ -745,7 +692,7 @@ query IntrospectionDroidTypeQuery {
 }
 ```
 
-and we get back:
+然后得到:
 
 ```json
 {
@@ -755,8 +702,7 @@ and we get back:
 }
 ```
 
-What if we want to know more about Droid, though? For example, is it
-an interface or an object?
+如果我们想得到`Droid`的更多信息呢？譬如，他是个interface（接口）还是object（对象）呢？
 
 ```GraphQL
 query IntrospectionDroidKindQuery {
@@ -767,7 +713,7 @@ query IntrospectionDroidKindQuery {
 }
 ```
 
-and we get back:
+然后得到:
 
 ```json
 {
@@ -778,8 +724,7 @@ and we get back:
 }
 ```
 
-`kind` returns a `__TypeKind` enum, one of whose values is `OBJECT`. If
-we asked about `Character` instead:
+`kind`得到了`__TypeKind`枚举类型，其中之一便是`OBJECT`。如果我们查询`Character`：
 
 
 ```GraphQL
@@ -791,7 +736,7 @@ query IntrospectionCharacterKindQuery {
 }
 ```
 
-and we get back:
+然后会得到:
 
 ```json
 {
@@ -802,10 +747,9 @@ and we get back:
 }
 ```
 
-We'd find that it is an interface.
+我们发现他是个interface（接口）。
 
-It's useful for an object to know what fields are available, so let's
-ask the introspection system about `Droid`:
+通常我们需要知道一个类型内有什么字段。继续以`Droid`为例，向内省系统查询：
 
 ```GraphQL
 query IntrospectionDroidFieldsQuery {
@@ -822,7 +766,7 @@ query IntrospectionDroidFieldsQuery {
 }
 ```
 
-and we get back:
+然后得到:
 
 ```json
 {
@@ -869,16 +813,11 @@ and we get back:
 }
 ```
 
-Those are our fields that we defined on `Droid`!
+这就是我们在`Droid`上定义的字段！
 
-`id` looks a bit weird there, it has no name for the type. That's
-because it's a "wrapper" type of kind `NON_NULL`. If we queried for
-`ofType` on that field's type, we would find the `String` type there,
-telling us that this is a non-null String.
+`id`看上去有些奇怪，它并没有类型名。那是因为他被`NON_NULL`类型封装。如果我们在字段的类型上查询`ofType`就能得到`String`，亦即它是一个non-null（非空）String。
 
-Similarly, both `friends` and `appearsIn` have no name, since they are the
-`LIST` wrapper type. We can query for `ofType` on those types, which will
-tell us what these are lists of.
+类似的，`friends`和`appearsIn`也没有名字，因为他们是`LIST`封装类型。我们也能在它们上面查询`ofType`，然后得到他们是什么list。
 
 ```GraphQL
 query IntrospectionDroidWrappedFieldsQuery {
@@ -899,7 +838,7 @@ query IntrospectionDroidWrappedFieldsQuery {
 }
 ```
 
-and we get back:
+然后得到：
 
 ```json
 {
@@ -960,8 +899,7 @@ and we get back:
 }
 ```
 
-Let's end with a feature of the introspection system particularly useful
-for tooling; let's ask the system for documentation!
+我们用一个内省系统在工具开发中特别有用的特性来收尾吧：向内省系统查询文档！
 
 ```GraphQL
 query IntrospectionDroidDescriptionQuery {
@@ -972,7 +910,7 @@ query IntrospectionDroidDescriptionQuery {
 }
 ```
 
-yields
+得到
 
 ```json
 {
@@ -983,22 +921,10 @@ yields
 }
 ```
 
-So we can access the documentation about the type system using introspection,
-and create documentation browsers, or rich IDE experiences.
+这样我们就能通过内省系统得到文档了，进一步制作文档阅读器，或者丰富IDE体验。
 
-This has just scratched the surface of the introspection system; we can
-query for enum values, what interfaces a type implements, and more. We
-can even introspect on the introspection system itself. The specification goes
-into more detail about this topic in the "Introspection" section, and the [introspection](https://github.com/graphql/graphql-js/blob/master/src/type/introspection.js)
-file in GraphQL.js
-contains code implementing a specification-compliant GraphQL query
-introspection system.
+这也只是内省系统的冰山一角，我们可以查询枚举型的值，也可查询一个类型实现了什么interface（接口）等等，我们甚至可以内省这个内省系统本身，本规范将在"Introspection"（内省）章节更加深入细致地讨论。GraphQL.js的[introspection](https://github.com/graphql/graphql-js/blob/master/src/type/introspection.js)文件包含一套兼容GraphQL规范的查询内省系统代码。
 
-### Additional Content
+### Additional Content/附加内容
 
-This README walked through the GraphQL.js reference implementation's type
-system, query execution, validation, and introspection systems. There's more
-in both [GraphQL.js](https://github.com/graphql/graphql-js/) and specification,
-including a description and implementation for executing queries, how to format
-a response, explaining how a type system maps to an underlying implementation,
-and how to format a GraphQL response, as well as a grammar for GraphQL.
+这个README概述了GraphQL.js参考实现的类型系统、查询执行、验证器和内省系统。在[GraphQL.js](https://github.com/graphql/graphql-js/)和规范里面，能找到查询执行的描述和实现、如何格式化响应的描述和实现，并阐述了类型系统和下层实现之间的映射、如何格式化响应以及GraphQL的语法。
