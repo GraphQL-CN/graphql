@@ -31,7 +31,7 @@ type Human {
 
 这种简记法十分便于描述类型系统中的基础模型，JS的参考实现中还实现了备注等的全功能类型系统。它建立了类型系统和下层数据之间的映射；基于测试目，[这儿](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsData.js)的下层数据是一组JS对象，但是大多数情况下，后台数据都是通过一些服务(service)来获取，此时类型系统层的作用便是将类型和字段映射到服务上去。
 
-通常的API都会给每个对象赋予一个唯一ID，用于重取特定对象，GraphQL中也采用了这种模式，以我们的`Human`类型举例（顺便添加了个String类型的homePlanet字段）。
+很多API都会给每个对象赋予一个唯一ID，用于重取特定对象，GraphQL中也采用了这种模式，以我们的`Human`类型举例（顺便添加了个String类型的homePlanet字段）。
 
 ```GraphQL
 type Human {
@@ -47,7 +47,7 @@ type Human {
 enum Episode { NEWHOPE, EMPIRE, JEDI }
 ```
 
-然后我们给`Human`添加一个字段，用于描述这个人物出场的剧集名称,类型为`Episode`的数组。
+然后我们给`Human`添加一个用于描述这个人物出场的剧集字段，类型为`Episode`型列表。
 
 ```GraphQL
 type Human {
@@ -71,7 +71,7 @@ type Droid {
 
 现在我们有两种类型了，需要一个方法来关联他们：人类和机器人都会有朋友，而朋友也可能是人类或者机器人，怎么将`friends`（朋友）字段关联到人类或者机器人上呢？
 
-仔细看看，我们发现人类和机器人具有一些共性，都用ID、名字、出场剧集的名称。因此我们添加一个interface（接口）`Character`，并且让`Human`和`Droid`都实现它，从而添加`friends`（朋友）字段，返回`Character`数组。
+仔细看看，我们发现人类和机器人具有一些共性，都用ID、名字、出场剧集的名称。因此我们添加一个interface（接口）`Character`，并且让`Human`和`Droid`都实现它，从而添加`friends`（朋友）字段，返回`Character`型列表。
 
 这样下来，我们的类型系统就变成了这样
 
@@ -105,6 +105,8 @@ type Droid implements Character {
 我们可能有疑问：这些字段能否返回`null`（空）呢？默认情况下，GraphQL的所有类型可以为空，因为获取GraphQL所需要的数据通常需要联络多个服务，它们不见得任何时刻都可用，当然如果类型系统能够保证特定类型不为空，那就可以将指定类型标上Non Null（非空），在我们的简记法中，在类型后面加一个"!"就行。
 
 注意，虽然我们现在的实现能够保证多个字段不为空（因为硬编码的），但我们并没有将其标注未非空，因为我们可能将硬编码内容替换为一个后台服务，而这个服务可能就没那么可靠了，所以对应字段可以是可空型，这样在服务出错的时候可以返回空数据，技能给类型系统一定的灵活性，同时也能向客户端通报后台的错误。
+
+我们可以修改一下这个类型系统，将ID标注为非空类型：
 
 ```GraphQL
 enum Episode { NEWHOPE, EMPIRE, JEDI }
@@ -149,7 +151,7 @@ type Query {
 
  - `hero`返回`Character`类型，它是《星球大战》的主角;它接受一个可选参数用以获取特定剧集的主角。
  - `human`接受一个非空String型参数（人类的ID），返回这个ID对应的人类。
- - `droid`类似，返回机器人。
+ - `droid`同上，返回机器人。
 
 这些字段展示了另一个类型系统的特性：字段可以接收参数从而返回特定值。
 
@@ -161,8 +163,8 @@ type Query {
 
 GraphQL查询语句声明式地描述了"取回什么样的数据"，而不管数据来源，只要数据提供者能满足GraphQL查询语句的要求就行。
 
-在我们的《星球大战》案例中, GraphQL.js库的[starWarsQueryTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsQuery-test.js)文件包含若干查询及返回。
-这是个测试文件，使用了上述的schema和一组样本数据，数据在[starWarsData.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsData.js)。这个测试文件是用于检测参考实现的。
+在我们的《星球大战》案例中， GraphQL.js库的[starWarsQueryTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsQuery-test.js)文件包含若干查询及返回。
+这是个测试文件，使用了上述的schema和一组样本数据，数据在[starWarsData.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsData.js)。这个测试文件是可用作检测参考实现的。
 
 查询上述schema的样例语句如下：
 
@@ -234,7 +236,7 @@ query HeroNameAndFriendsQuery {
 }
 ```
 
-GraphQL的一个关键特性即是嵌套查询(nested query)。上述案例中，我们查询了R2-D2的friends（朋友），并可以查询了这些对象的进一步信息。我们来构造一个查询语句，用来查询R2-D2和它朋友们的name（名字）和出场episode（剧集）：
+GraphQL的一个关键特性即是嵌套查询(nested query)。上述案例中，我们查询了R2-D2的friends（朋友），并可以查询了这些对象的进一步信息。我们来构造一个查询语句，用来查询R2-D2和它朋友们的name（名字）和出场episode（剧集）,以及它朋友的朋友的名字：
 
 ```GraphQL
 query NestedQuery {
@@ -292,7 +294,7 @@ query NestedQuery {
 }
 ```
 
-上面的`Query`类型定义了一种通过ID获取human(人类)的信息，我们将ID硬编码再查询语句中：
+上面的`Query`类型定义了一种通过ID获取human(人类)的信息，我们将ID硬编码在查询语句中：
 
 ```GraphQL
 query FetchLukeQuery {
@@ -322,7 +324,7 @@ query FetchSomeIDQuery($someId: String!) {
 }
 ```
 
-现在查询语句里面有了参数`$someId`，如果想要运行，我们需要提供ID，譬如1000对应Luke，1002对应Han，如果传递的是无效ID，那么就会得到`null`，表示没有哪个对象。
+现在查询语句里面有了参数`$someId`，如果想要运行，我们需要提供ID，譬如1000对应Luke，1002对应Han，如果传递的是无效ID，那么就会得到`null`，表示没有对应对象。
 
 注意，默认情况下，返回内容的名字和字段名一致，有时候有必要修改键名，以避免键名冲突（譬如以不同参数获取相同字段）。
 
@@ -436,7 +438,7 @@ query CheckTypeOfR2 {
 }
 ```
 
-因为R2-D2是机器人,所以得到：
+因为R2-D2是机器人，所以得到：
 
 ```json
 {
@@ -475,7 +477,7 @@ query CheckTypeOfLuke {
 
 通过使用类型系统，你可以预先判定一个GraphQL查询是否有效。这能让服务端和客户端有效地给开发者预先通告当前查询语句是否有效，而不必只能依赖运行时检查。
 
-我们的《星球大战》案例中，[starWarsValidationTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsValidation-test.js)文件包含了若干使用了验证的查询，这是个测试文件，用于检测参考实现的验证器。
+我们的《星球大战》案例中，[starWarsValidationTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsValidation-test.js)文件包含了若干使用了验证的查询，这是个测试文件，可用作检测参考实现的验证器。
 
 首先，我们构造一个有效的复杂查询，这是来自上文的`NestedQuery`案例，其中的重复字段已经被提取到了一个fragment片段中：
 
@@ -581,7 +583,7 @@ query DroidFieldInInlineFragment {
 
 我们经常需要知道一个GraphQL schema（模式）支持的所有查询类型，而GraphQL的introspection（内省）系统就是用来完成这个的。
 
-我们的《星球大战》案例中，[starWarsIntrospectionTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsIntrospection-test.js)文件包含了若干使用了内省系统的查询。这是个测试文件，用于检测参考实现的内省系统。
+我们的《星球大战》案例中，[starWarsIntrospectionTests.js](https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsIntrospection-test.js)文件包含了若干使用了内省系统的查询。这是个测试文件，可用作检测参考实现的内省系统。
 
 我们定义了类型系统，所以我们知道那些类型是可用的，如果不知道，还可以通过向GraphQL的查询`__schema`字段得到这些，这个字段是一定存在于Query根级类型上的。不妨一试：
 
@@ -928,3 +930,9 @@ query IntrospectionDroidDescriptionQuery {
 ### Additional Content/附加内容
 
 这个README概述了GraphQL.js参考实现的类型系统、查询执行、验证器和内省系统。在[GraphQL.js](https://github.com/graphql/graphql-js/)和规范里面，能找到查询执行的描述和实现、如何格式化响应的描述和实现，并阐述了类型系统和下层实现之间的映射、如何格式化响应以及GraphQL的语法。
+
+---
+
+  * 翻译：Jonir Rings
+  * 审校：Cyus
+  * 润色：*TODO*

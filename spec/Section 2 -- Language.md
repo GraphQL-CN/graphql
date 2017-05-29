@@ -1,19 +1,14 @@
 # Language/语言
 
-Clients use the GraphQL query language to make requests to a GraphQL service.
-We refer to these request sources as documents. A document may contain
-operations (queries, mutations, and subscriptions) as well as fragments, a
-common unit of composition allowing for query reuse.
+客户端使用GraphQL查询语言来请求GraphQL服务，我们称这些请求为文档，文档包含操作（queries/查询，mutations/修改，和subscriptions订阅）和片段（用于组合重用的共有单元）。
 
-A GraphQL document is defined as a syntactic grammar where terminal symbols are
-tokens (indivisible lexical units). These tokens are defined in a lexical
-grammar which matches patterns of source characters (defined by a
-double-colon `::`).
-
+GraphQL文档的语法中，将终端符号视为记号，即独立词法单元。这些记号以词法方式定义，满足源字符模式（用`::`定义）。
 
 ## Source Text/源文本
 
 SourceCharacter :: /[\u0009\u000A\u000D\u0020-\uFFFF]/
+
+GraphQL文档可表示为一序列的[Unicode](http://unicode.org/standard/standard.html)（统一码）字符，然而，除了少许例外，大部大部分GraphQL文档都是用ASCII非控制字符
 
 GraphQL documents are expressed as a sequence of
 [Unicode](http://unicode.org/standard/standard.html) characters. However, with
@@ -225,7 +220,7 @@ short-hand form which omits the query keyword and query name.
 
 For example, this unnamed query operation is written via query shorthand.
 
-```graphql
+```GraphQL
 {
   field
 }
@@ -247,7 +242,7 @@ An operation selects the set of information it needs, and will receive exactly
 that information and nothing more, avoiding over-fetching and
 under-fetching data.
 
-```graphql
+```GraphQL
 {
   id
   firstName
@@ -275,7 +270,7 @@ shaped response.
 For example, this operation selects fields of complex data and relationships
 down to scalar values.
 
-```graphql
+```GraphQL
 {
   me {
     id
@@ -298,7 +293,7 @@ viewer. Some typical examples of these top fields include references to a
 current logged-in viewer, or accessing certain types of data referenced by a
 unique identifier.
 
-```graphql
+```GraphQL
 # `me` could represent the currently logged in viewer.
 {
   me {
@@ -329,7 +324,7 @@ function arguments within a GraphQL server's implementation.
 In this example, we want to query a specific user (requested via the `id`
 argument) and their profile picture of a specific `size`:
 
-```graphql
+```GraphQL
 {
   user(id: 4) {
     id
@@ -341,7 +336,7 @@ argument) and their profile picture of a specific `size`:
 
 Many arguments can exist for a given field:
 
-```graphql
+```GraphQL
 {
   user(id: 4) {
     id
@@ -358,13 +353,13 @@ semantic meaning.
 
 These two queries are semantically identical:
 
-```graphql
+```GraphQL
 {
   picture(width: 200, height: 100)
 }
 ```
 
-```graphql
+```GraphQL
 {
   picture(height: 100, width: 200)
 }
@@ -381,7 +376,7 @@ queried. However, you can define a different name by specifying an alias.
 In this example, we can fetch two profile pictures of different sizes and ensure
 the resulting object will not have duplicate keys:
 
-```graphql
+```GraphQL
 {
   user(id: 4) {
     id
@@ -407,7 +402,7 @@ Which returns the result:
 
 Since the top level of a query is a field, it also can be given an alias:
 
-```graphql
+```GraphQL
 {
   zuck: user(id: 4) {
     id
@@ -449,7 +444,7 @@ or union.
 For example, if we wanted to fetch some common information about mutual friends
 as well as friends of some user:
 
-```graphql
+```GraphQL
 query noFragments {
   user(id: 4) {
     friends(first: 10) {
@@ -469,7 +464,7 @@ query noFragments {
 The repeated fields could be extracted into a fragment and composed by
 a parent fragment or query.
 
-```graphql
+```GraphQL
 query withFragments {
   user(id: 4) {
     friends(first: 10) {
@@ -495,7 +490,7 @@ spreads.
 
 For example:
 
-```graphql
+```GraphQL
 query withNestedFragments {
   user(id: 4) {
     friends(first: 10) {
@@ -539,7 +534,7 @@ it is operating on matches the type of the fragment.
 
 For example in this query on the Facebook data model:
 
-```graphql
+```GraphQL
 query FragmentTyping {
   profiles(handles: ["zuck", "cocacola"]) {
     handle
@@ -591,7 +586,7 @@ conditionally include fields based on their runtime type. This feature of
 standard fragment inclusion was demonstrated in the `query FragmentTyping`
 example. We could accomplish the same thing using inline fragments.
 
-```graphql
+```GraphQL
 query inlineFragmentTyping {
   profiles(handles: ["zuck", "cocacola"]) {
     handle
@@ -613,7 +608,7 @@ Inline fragments may also be used to apply a directive to a group of fields.
 If the TypeCondition is omitted, an inline fragment is considered to be of the
 same type as the enclosing context.
 
-```graphql
+```GraphQL
 query inlineFragmentNoType($expandedInfo: Boolean) {
   user(handle: "zuck") {
     id
@@ -763,7 +758,7 @@ GraphQL has two semantically different ways to represent the lack of a value:
 
 For example, these two field calls are similar, but are not identical:
 
-```graphql
+```GraphQL
 {
   field(arg: null)
   field
@@ -838,13 +833,13 @@ identical semantic meaning.
 
 These two queries are semantically identical:
 
-```graphql
+```GraphQL
 {
   nearestThing(location: { lon: 12.43, lat: -53.211 })
 }
 ```
 
-```graphql
+```GraphQL
 {
   nearestThing(location: { lat: -53.211, lon: 12.43 })
 }
@@ -888,7 +883,7 @@ throughout the execution of that operation.
 In this example, we want to fetch a profile picture size based on the size
 of a particular device:
 
-```graphql
+```GraphQL
 query getZuckProfile($devicePicSize: Int) {
   user(id: 4) {
     id
