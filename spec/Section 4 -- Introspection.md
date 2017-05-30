@@ -18,7 +18,7 @@ type User {
 
 The query
 
-```graphql
+```GraphQL
 {
   __type(name: "User") {
     name
@@ -34,7 +34,7 @@ The query
 
 would return
 
-```js
+```json
 {
   "__type": {
     "name": "User",
@@ -50,7 +50,7 @@ would return
       {
         "name": "birthday",
         "type": { "name": "Date" }
-      },
+      }
     ]
   }
 }

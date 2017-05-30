@@ -285,7 +285,7 @@ that object.
 
 For example, selecting all the fields of `Person`:
 
-```graphql
+```GraphQL
 {
   name
   age
@@ -295,7 +295,7 @@ For example, selecting all the fields of `Person`:
 
 Would yield the object:
 
-```js
+```json
 {
   "name": "Mark Zuckerberg",
   "age": 30,
@@ -305,7 +305,7 @@ Would yield the object:
 
 While selecting a subset of fields:
 
-```graphql
+```GraphQL
 {
   age
   name
@@ -314,7 +314,7 @@ While selecting a subset of fields:
 
 Must only yield exactly that subset:
 
-```js
+```json
 {
   "age": 30,
   "name": "Mark Zuckerberg"
@@ -348,7 +348,7 @@ an object, so this query is not valid:
 
 However, this example is valid:
 
-```graphql
+```GraphQL
 {
   name
   relationship {
@@ -359,7 +359,7 @@ However, this example is valid:
 
 And will yield the subset of each object type queried:
 
-```js
+```json
 {
   "name": "Mark Zuckerberg",
   "relationship": {
@@ -388,7 +388,7 @@ be anticipated.
 If a fragment is spread before other fields, the fields that fragment specifies
 occur in the response before the following fields.
 
-```graphql
+```GraphQL
 {
   foo
   ...Frag
@@ -403,7 +403,7 @@ fragment Frag on Query {
 
 Produces the ordered result:
 
-```js
+```json
 {
   "foo": 1,
   "bar": 2,
@@ -416,7 +416,7 @@ If a field is queried multiple times in a selection, it is ordered by the first
 time it is encountered. However fragments for which the type does not apply does
 not affect ordering.
 
-```graphql
+```GraphQL
 {
   foo
   ...Ignored
@@ -438,7 +438,7 @@ fragment Matching on Query {
 
 Produces the ordered result:
 
-```js
+```json
 {
   "foo": 1,
   "bar": 2,
@@ -449,7 +449,7 @@ Produces the ordered result:
 Also, if directives result in fields being excluded, they are not considered in
 the ordering of fields.
 
-```graphql
+```GraphQL
 {
   foo @skip(if: true)
   bar
@@ -459,7 +459,7 @@ the ordering of fields.
 
 Produces the ordered result:
 
-```js
+```json
 {
   "bar": 1,
   "foo": 2
@@ -502,7 +502,7 @@ these arguments.
 
 This example query:
 
-```graphql
+```GraphQL
 {
   name
   picture(size: 600)
@@ -511,7 +511,7 @@ This example query:
 
 May yield the result:
 
-```js
+```json
 {
   "name": "Mark Zuckerberg",
   "picture": "http://some.cdn/picture_600.jpg"
@@ -610,7 +610,7 @@ type Contact {
 This allows us to write a query for a `Contact` that can select the
 common fields.
 
-```graphql
+```GraphQL
 {
   entity {
     name
@@ -638,7 +638,7 @@ because `entity` refers to a `NamedEntity`, and `age` is not defined on that
 interface. Querying for `age` is only valid when the result of `entity` is a
 `Person`; the query can express this using a fragment or an inline fragment:
 
-```graphql
+```GraphQL
 {
   entity {
     name
@@ -722,7 +722,7 @@ defines no fields:
 
 Instead, the query would be:
 
-```graphql
+```GraphQL
 {
   firstSearchResult {
     ... on Person {
@@ -827,7 +827,7 @@ type declared by the input field.
 
 Following are examples of Input Object coercion for the type:
 
-```graphql
+```GraphQL
 input ExampleInputObject {
   a: String
   b: Int!
@@ -950,7 +950,7 @@ Example: The value {null} cannot be provided to a non-null argument.
 
 Example: A variable of a nullable type cannot be provided to a non-null argument.
 
-```graphql
+```GraphQL
 query withNullableVariable($var: String) {
   fieldWithNonNullArg(nonNullArg: $var)
 }
@@ -981,7 +981,7 @@ described by the if argument.
 In this example `experimentalField` will be queried only if the `$someTest` is
 provided a `false` value.
 
-```graphql
+```GraphQL
 query myQuery($someTest: Boolean) {
   experimentalField @skip(if: $someTest)
 }
@@ -997,7 +997,7 @@ described by the if argument.
 In this example `experimentalField` will be queried only if the `$someTest` is
 provided a `true` value.
 
-```graphql
+```GraphQL
 query myQuery($someTest: Boolean) {
   experimentalField @include(if: $someTest)
 }
@@ -1026,7 +1026,7 @@ The fields on the query type indicate what fields are available at
 the top level of a GraphQL query. For example, a basic GraphQL query
 like this one:
 
-```graphql
+```GraphQL
 query getMe {
   me
 }
@@ -1035,7 +1035,7 @@ query getMe {
 Is valid when the type provided for the query starting type has a field
 named "me". Similarly
 
-```graphql
+```GraphQL
 mutation setName {
   setName(name: "Zuck") {
     newName
@@ -1046,7 +1046,7 @@ mutation setName {
 Is valid when the type provided for the mutation starting type is not null,
 and has a field named "setName" with a string argument named "name".
 
-```graphql
+```GraphQL
 subscription {
   newMessage {
     text

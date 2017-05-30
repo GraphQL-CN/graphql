@@ -161,7 +161,7 @@ it represents a path in the response, not in the query.
 For example, if fetching one of the friends' names fails in the following
 query:
 
-```graphql
+```GraphQL
 {
   hero(episode: $episode) {
     name
@@ -175,7 +175,7 @@ query:
 
 The response might look like:
 
-```js
+```json
 {
   "errors": [
     {
@@ -215,7 +215,7 @@ For example, if the `name` field from above had declared a `Non-Null` return
 type in the schema, the result would look different but the error reported would
 be the same:
 
-```js
+```json
 {
   "errors": [
     {

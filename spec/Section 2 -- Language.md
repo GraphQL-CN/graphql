@@ -8,44 +8,35 @@ GraphQL文档的语法中，将终端符号视为记号，即独立词法单元�
 
 SourceCharacter :: /[\u0009\u000A\u000D\u0020-\uFFFF]/
 
-GraphQL文档可表示为一序列的[Unicode](http://unicode.org/standard/standard.html)（统一码）字符，然而，除了少许例外，大部大部分GraphQL文档都是用ASCII非控制字符
+源字符 -> \u0009\u000A\u000D\u0020-\uFFFF
 
-GraphQL documents are expressed as a sequence of
-[Unicode](http://unicode.org/standard/standard.html) characters. However, with
-few exceptions, most of GraphQL is expressed only in the original non-control
-ASCII range so as to be as widely compatible with as many existing tools,
-languages, and serialization formats as possible and avoid display issues in
-text editors and source control.
+GraphQL文档可表示为一序列的[Unicode](http://unicode.org/standard/standard.html)（统一码）字符，然而，除了少许例外，大部大部分GraphQL文档都是用ASCII非控制字符来表示，以便于尽量兼容已有工具、语言和序列化格式，并尽可能避免在编辑器和源代码管理的显示问题。
 
 
 ### Unicode/统一码
 
 UnicodeBOM :: "Byte Order Mark (U+FEFF)"
 
-Non-ASCII Unicode characters may freely appear within {StringValue} and
-{Comment} portions of GraphQL.
+UnicodeBOM -> "字节顺序标记(U+FEFF)"
 
-The "Byte Order Mark" is a special Unicode character which
-may appear at the beginning of a file containing Unicode which programs may use
-to determine the fact that the text stream is Unicode, what endianness the text
-stream is in, and which of several Unicode encodings to interpret.
+GraphQL的{StringValue}（字符串值）和{Comment}（备注）中可以使用非ASCII的Unicode字符。
+
+BOM，又称字节顺序标记，是一个特殊的Unicode字符，它出现在文件的头部，以便程序用以确认当前文本流是Unicode编码，使用了大端还是小端，该用哪一种Unicode编码来转义。
 
 
-### White Space/空白区
+### White Space/空白符
 
 WhiteSpace ::
   - "Horizontal Tab (U+0009)"
   - "Space (U+0020)"
 
-White space is used to improve legibility of source text and act as separation
-between tokens, and any amount of white space may appear before or after any
-token. White space between tokens is not significant to the semantic meaning of
-a GraphQL query document, however white space characters may appear within a
-{String} or {Comment} token.
+空白符 ->
+  - "水平制表符(U+0009)"
+  - "空格(U+0020)"
 
-Note: GraphQL intentionally does not consider Unicode "Zs" category characters
-as white-space, avoiding misinterpretation by text editors and source
-control tools.
+空白符出现在记号的前后，作为记号分隔使用，用于提升源文本的易读性。GraphQL查询文档的空白符可能出现在{String}或{Comment}记号中，但并不会显著影响其语义。
+
+Note: GraphQL不采用Unicode的Zs类别字符作为空白符，以避免编辑器和源代码管理工具的误读。
 
 
 ### Line Terminators/行终止符
