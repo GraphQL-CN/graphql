@@ -2,15 +2,15 @@
 
 客户端使用GraphQL查询语言来请求GraphQL服务，我们称这些请求为文档，文档包含操作（queries/查询，mutations/修改，和subscriptions订阅）和片段（用于组合重用的共有单元）。
 
-GraphQL文档的语法中，将终端符号视为记号，即独立词法单元。这些记号以词法方式定义，满足源字符模式（用`::`定义）。
+GraphQL文档的语法中，将终端符号视为记号，即独立词法单元。这些记号以词法方式定义，满足源字符模式（用`::`定义）。<small>译者案：翻译中使用->表示</small>
 
 ## Source Text/源文本
 
 SourceCharacter :: /[\u0009\u000A\u000D\u0020-\uFFFF]/
 
-源字符 -> \u0009\u000A\u000D\u0020-\uFFFF
+源字符 -> /\[\u0009\u000A\u000D\u0020-\uFFFF\]/
 
-GraphQL文档可表示为一序列的[Unicode](http://unicode.org/standard/standard.html)（统一码）字符，然而，除了少许例外，大部大部分GraphQL文档都是用ASCII非控制字符来表示，以便于尽量兼容已有工具、语言和序列化格式，并尽可能避免在编辑器和源代码管理的显示问题。
+GraphQL文档可表示为一序列的[Unicode](http://unicode.org/standard/standard.html)（统一码）字符，然而，除了少许例外，大部分GraphQL文档都是用ASCII非控制字符来表示，以便于尽量兼容已有工具、语言和序列化格式，并尽可能避免在编辑器和源代码管理的显示问题。
 
 
 ### Unicode/统一码
@@ -46,14 +46,14 @@ LineTerminator ::
   - "Carriage Return (U+000D)" [ lookahead ! "New Line (U+000A)" ]
   - "Carriage Return (U+000D)" "New Line (U+000A)"
 
-Like white space, line terminators are used to improve the legibility of source
-text, any amount may appear before or after any other token and have no
-significance to the semantic meaning of a GraphQL query document. Line
-terminators are not found within any other token.
+行终止符 ->
+  - "新行 (U+000A)"
+  - "回车 (U+000D)"
+  - "回车 (U+000D)" "新行 (U+000A)"
 
-Note: Any error reporting which provide the line number in the source of the
-offending syntax should use the preceding amount of {LineTerminator} to produce
-the line number.
+跟空白符类似，行终止符也是用于提升源文本的易读性，可出现在记号的前后，对GraphQL查询文档的语义无显著影响。行终止符不应该出现在其他记号之间。
+
+Note: 语法报错时的行号应该由之前{LineTerminator}（行终止符）的总数来生成。
 
 
 ### Comments/注释
@@ -62,31 +62,26 @@ Comment :: `#` CommentChar*
 
 CommentChar :: SourceCharacter but not LineTerminator
 
-GraphQL source documents may contain single-line comments, starting with the
-{`#`} marker.
+注释 -> `#` 注释字符
 
-A comment can contain any Unicode code point except {LineTerminator} so a
-comment always consists of all code points starting with the {`#`} character up
-to but not including the line terminator.
+注释字符 -> 源字符，非行终止符
 
-Comments behave like white space and may appear after any token, or before a
-line terminator, and have no significance to the semantic meaning of a GraphQL
-query document.
+GraphQL查询文档可以包含以{`#`}开头的单行注释。
+
+注释可使用除了{LineTerminator}（行终止符）以外的任意Unicode字符（码点）。所以可以说，注释包含了以{`#`}开头的除行终止符以外的所有字符。
+
+注释与空白符类似，出现在任意记号后面、行终止符前面，对GraphQL查询文档的语义无显著影响。
 
 
 ### Insignificant Commas/无语义逗号
 
 Comma :: ,
 
-Similar to white space and line terminators, commas ({`,`}) are used to improve
-the legibility of source text and separate lexical tokens but are otherwise
-syntactically and semantically insignificant within GraphQL query documents.
+逗号 -> ,
 
-Non-significant comma characters ensure that the absence or presence of a comma
-does not meaningfully alter the interpreted syntax of the document, as this can
-be a common user-error in other languages. It also allows for the stylistic use
-of either trailing commas or line-terminators as list delimiters which are both
-often desired for legibility and maintainability of source code.
+与空白符和行终止符类似，逗号({`,`})也是提升源文本的易读性、分隔词法记号，对GraphQL查询文档的语法语义上也无显著影响.
+
+无语义逗号保证了无论有误逗号，都不影响文档的解读，在其他语言中这就可能是一个用户错误。为了源代码易读性和可维护性，列表会使用行终止符和末尾逗号作为分隔符，无语义逗号也有这个样式上的用途。
 
 
 ### Lexical Tokens/词法记号
@@ -98,11 +93,16 @@ Token ::
   - FloatValue
   - StringValue
 
-A GraphQL document is comprised of several kinds of indivisible lexical tokens
-defined here in a lexical grammar by patterns of source Unicode characters.
+记号 ->
+  - 标点
+  - 命名
+  - 整数值
+  - 浮点值
+  - 字符串型值
 
-Tokens are later used as terminal symbols in a GraphQL query document syntactic
-grammars.
+一个GraphQL文档由多种独立记号组成，本规范中使用源文本Unicode字符模式来定义这些记号。
+
+在后文GraphQL查询文档句法中，记号将作为终结符使用。
 
 
 ### Ignored Tokens/无语义记号
@@ -114,40 +114,38 @@ Ignored ::
   - Comment
   - Comma
 
-Before and after every lexical token may be any amount of ignored tokens
-including {WhiteSpace} and {Comment}. No ignored regions of a source
-document are significant, however ignored source characters may appear within
-a lexical token in a significant way, for example a {String} may contain white
-space characters.
+无语义记号 ->
+  - Unicode字节顺序标记
+  - 空白符
+  - 行终止符
+  - 注释
+  - 逗号
 
-No characters are ignored while parsing a given token, as an example no
-white space characters are permitted between the characters defining a
-{FloatValue}.
+在词法记号的前后可能会出现不定量的无语义记号，包括{WhiteSpace}（空白符）和{Comment}备注。源文档的无语义区域都是无语义影响的，但是无语义字符可能以一种有影响的方式出现在源字符词法记号之间，譬如{String}（字符串）可能包含空白字符。
 
+在解析给定记号时，所有字符都不能被忽略，譬如{FloatValue}（浮点值）的字符中不允许出现空白符。
+<small>(译者案：本段无力，求大神指点)</small>
 
 ### Punctuators/标点
 
 Punctuator :: one of ! $ ( ) ... : = @ [ ] { | }
 
-GraphQL documents include punctuation in order to describe structure. GraphQL
-is a data description language and not a programming language, therefore GraphQL
-lacks the punctuation often used to describe mathematical expressions.
+标点 -> ! $ ( ) ... : = @ \[ \] \{ | \} 之一
+
+GraphQL文档使用了标点符号以描述结构，GraphQL是一种数据描述语言，而非编程语言，因此GraphQL缺乏用于描述数学表达式的标点符号。
 
 
 ### Names/命名
 
 Name :: /[_A-Za-z][_0-9A-Za-z]*/
 
-GraphQL query documents are full of named things: operations, fields, arguments,
-directives, fragments, and variables. All names must follow the same
-grammatical form.
+命名 ->  /\[_A-Za-z\]\[_0-9A-Za-z\]/\*
 
-Names in GraphQL are case-sensitive. That is to say `name`, `Name`, and `NAME`
-all refer to different names. Underscores are significant, which means
-`other_name` and `othername` are two different names.
+GraphQL查询文档全是命名的产物：operations（操作），fields（字段），arguments（参数），directives（指令）， fragments（片段）和variables（变量）。所有命名必须遵循以下格式：
 
-Names in GraphQL are limited to this <acronym>ASCII</acronym> subset of possible
-characters to support interoperation with as many other systems as possible.
+GraphQL的命名是大小写敏感的，也就是说`name`，`Name`，和`NAME`是不同的名字，下划线也具有影响，`other_name`和`othername`也是两个不同的名字。
+
+GraphQL的命名限制在上述<acronym>ASCII</acronym>子集内，以便支持尽可能多的其他系统。
 
 
 ## Query Document/查询文档
@@ -158,19 +156,15 @@ Definition :
   - OperationDefinition
   - FragmentDefinition
 
-A GraphQL query document describes a complete file or request string received by
-a GraphQL service. A document contains multiple definitions of Operations and
-Fragments. GraphQL query documents are only executable by a server if they
-contain an operation. However documents which do not contain operations may
-still be parsed and validated to allow client to represent a single request
-across many documents.
+文档 -> 定义
 
-If a document contains only one operation, that operation may be unnamed or
-represented in the shorthand form, which omits both the query keyword and
-operation name. Otherwise, if a GraphQL query document contains multiple
-operations, each operation must be named. When submitting a query document with
-multiple operations to a GraphQL service, the name of the desired operation to
-be executed must also be provided.
+定义 ->
+  - 操作定义
+  - 片段定义
+
+GraphQL查询文档描述了GraphQL服务收到的完整文件或者请求字符串。一个文档可以包含多个操作和片段的定义。一个查询文档只有包含操作时，服务器才能执行。但是无操作的文档也能被解析和验证，以让客户端提供单个跨文档请求。
+
+如果一个文档只有一个操作，那这个操作可以不带命名或者以简写，省略掉query关键字和操作名。否则当一个查询文档包含多个操作时，每个操作都必须命名，并且在提交给服务器的时候，也要指明需要执行的目标操作。
 
 
 ## Operations/操作
@@ -181,19 +175,21 @@ OperationDefinition :
 
 OperationType : one of `query` `mutation` `subscription`
 
-There are three types of operations that GraphQL models:
+操作定义 ->
+  - 操作类型命名？变量定义？指令？选择集合
+  - 选择集合
 
-  * query - a read-only fetch.
-  * mutation - a write followed by a fetch.
-  * subscription - a long-lived request that fetches data in response to source
-    events.
+操作类型 ->
+  - `query` `mutation` `subscription`之一
+  
+GraphQL做了三类操作模型：
+  * query/查询 - 只读获取
+  * mutation/改变 - 先写入再获取
+  * subscription/订阅 - 一个长期请求，根据源事件获取数据
 
-Each operation is represented by an optional operation name and a selection set.
+每一个操作都以一个可选操作名和选择集合表示，例如这个mutation（改变）操作，对一个story点赞（like），然后获取了被点赞次数：
 
-For example, this mutation operation might "like" a story and then retrieve the
-new number of likes:
-
-```
+```GraphQL
 mutation {
   likeStory(storyID: 12345) {
     story {
@@ -203,13 +199,9 @@ mutation {
 }
 ```
 
-**Query shorthand**
+**Query shorthand/查询简写**
 
-If a document contains only one query operation, and that query defines no
-variables and contains no directives, that operation may be represented in a
-short-hand form which omits the query keyword and query name.
-
-For example, this unnamed query operation is written via query shorthand.
+如果一个文档只包含一个查询操作，也不包含变量和指令，那么这个操作可以省略query关键字和操作名。例如，下面这个无名查询操作就写成了查询简写形式：
 
 ```GraphQL
 {
@@ -217,7 +209,7 @@ For example, this unnamed query operation is written via query shorthand.
 }
 ```
 
-Note: many examples below will use the query short-hand syntax.
+Note: 注意，后文中很多案例都会使用查询简写格式。
 
 
 ## Selection Sets/选择集合
@@ -229,9 +221,14 @@ Selection :
   - FragmentSpread
   - InlineFragment
 
-An operation selects the set of information it needs, and will receive exactly
-that information and nothing more, avoiding over-fetching and
-under-fetching data.
+选择集合 -> \{选择\}
+
+选择 ->
+  - 字段
+  - 片段解构
+  - 内联片段
+
+一个操作选择了他所需要的信息的集合，然后就会精确地得到他所要的信息，没有一点多余，避免了数据的多取或少取。
 
 ```GraphQL
 {
@@ -241,25 +238,20 @@ under-fetching data.
 }
 ```
 
-In this query, the `id`, `firstName`, and `lastName` fields form a selection
-set. Selection sets may also contain fragment references.
+这个query/查询中，`id`，`firstName`和`lastName`字段构成了选择集合，选择集合也能包含fragment/片段的引用。
 
 
 ## Fields/字段
 
 Field : Alias? Name Arguments? Directives? SelectionSet?
 
-A selection set is primarily composed of fields. A field describes one discrete
-piece of information available to request within a selection set.
+字段 -> 别名？具名参数？指令？选择集合？
 
-Some fields describe complex data or relationships to other data. In order to
-further explore this data, a field may itself contain a selection set, allowing
-for deeply nested requests. All GraphQL operations must specify their selections
-down to fields which return scalar values to ensure an unambiguously
-shaped response.
+一个选择集合主要由字段组成，一个字段描述了选择集合中对请求可用的一个离散信息片段。
 
-For example, this operation selects fields of complex data and relationships
-down to scalar values.
+有些字段描述了复杂的数据或者与其他数据的关联，为了进一步解明这种数据，一个字段可能包含一个选择集合，从而使能将请求嵌套起来。所有的GraphQL操作都必须依次深入嵌套，指明所有标量值字段，以保证响应数据的形态上没有歧义。
+
+例如，这个操作选择了复杂数据和关联数据，并深入到嵌套内部，直到标量值字段。
 
 ```GraphQL
 {
@@ -278,14 +270,10 @@ down to scalar values.
 }
 ```
 
-Fields in the top-level selection set of an operation often represent some
-information that is globally accessible to your application and its current
-viewer. Some typical examples of these top fields include references to a
-current logged-in viewer, or accessing certain types of data referenced by a
-unique identifier.
+一个操作中，顶层选择集合的字段通常表示对应用和观察者而言全局可见的信息。典型的案例有顶层字段指向当前登录的观察者，或者引用唯一id来取特定类型数据：
 
 ```GraphQL
-# `me` could represent the currently logged in viewer.
+# `me` could represent the currently logged in viewer.`me`指代当前登录的观察者
 {
   me {
     name
@@ -294,6 +282,7 @@ unique identifier.
 
 # `user` represents one of many users in a graph of data, referred to by a
 # unique identifier.
+# `user`表示一个通过id来从图数据中取出来的用户
 {
   user(id: 4) {
     name
@@ -308,12 +297,11 @@ Arguments : ( Argument+ )
 
 Argument : Name : Value
 
-Fields are conceptually functions which return values, and occasionally accept
-arguments which alter their behavior. These arguments often map directly to
-function arguments within a GraphQL server's implementation.
+参数 -> 命名: 值
 
-In this example, we want to query a specific user (requested via the `id`
-argument) and their profile picture of a specific `size`:
+字段在概念上是会返回值的函数，偶尔接受参数以改变其行为。通常这些参数和GraphQL服务器实现的函数参数直接映射。
+
+这个案例中，我们向查询特定用户（通过`id`参数请求）的特定尺寸档案照片（通过`size`参数）：
 
 ```GraphQL
 {
@@ -325,7 +313,7 @@ argument) and their profile picture of a specific `size`:
 }
 ```
 
-Many arguments can exist for a given field:
+许多参数也能存在于给定字段：
 
 ```GraphQL
 {
@@ -337,12 +325,11 @@ Many arguments can exist for a given field:
 }
 ```
 
-**Arguments are unordered**
+**Arguments are unordered/参数无需顺序**
 
-Arguments may be provided in any syntactic order and maintain identical
-semantic meaning.
+参数可以以任意句法顺序排列，都表示同一种语义。
 
-These two queries are semantically identical:
+下列两个查询语义上都是一样的：
 
 ```GraphQL
 {
@@ -361,11 +348,11 @@ These two queries are semantically identical:
 
 Alias : Name :
 
-By default, the key in the response object will use the field name
-queried. However, you can define a different name by specifying an alias.
+别名 -> 命名
 
-In this example, we can fetch two profile pictures of different sizes and ensure
-the resulting object will not have duplicate keys:
+默认情况下，返回对象的键名会采用查询的字段名，然后你可以定义不同的键名，亦即别名。
+
+案例中，我们获取了两个不同尺寸的档案照片，并保证了返回对象没有重复键名：
 
 ```GraphQL
 {
@@ -378,7 +365,7 @@ the resulting object will not have duplicate keys:
 }
 ```
 
-Which returns the result:
+然后得到结果：
 
 ```json
 {
@@ -391,7 +378,7 @@ Which returns the result:
 }
 ```
 
-Since the top level of a query is a field, it also can be given an alias:
+顶级query/查询也是一个字段，所以它也可以使用别名：
 
 ```GraphQL
 {
@@ -402,7 +389,7 @@ Since the top level of a query is a field, it also can be given an alias:
 }
 ```
 
-Returns the result:
+得到这个结果：
 
 ```json
 {
@@ -413,8 +400,7 @@ Returns the result:
 }
 ```
 
-A field's response key is its alias if an alias is provided, and it is
-otherwise the field's name.
+如果使用了别名，那么返回对象的中字段的键名就是别名，否则就是字段名。
 
 
 ## Fragments/片段
@@ -425,15 +411,15 @@ FragmentDefinition : fragment FragmentName TypeCondition Directives? SelectionSe
 
 FragmentName : Name but not `on`
 
-Fragments are the primary unit of composition in GraphQL.
+片段解构/展开 -> ... 片段名 指令？
 
-Fragments allow for the reuse of common repeated selections of fields, reducing
-duplicated text in the document. Inline Fragments can be used directly within a
-selection to condition upon a type condition when querying against an interface
-or union.
+片段定义 -> fragment 片段名 类型条件 指令？ 选择集
 
-For example, if we wanted to fetch some common information about mutual friends
-as well as friends of some user:
+片段名 -> 除了`on`以外的命名
+
+片段是GraphQL组合拼装的基本单元，它通用选择集字段的重用得以实现，减少了文档中的重复文本。内联片段可以直接在选择集合内使用，通常用于interface（接口）或者union（联合）这种存在类型条件的场合。
+
+例如，我们想要获取某个用户的朋友以及和他互为朋友的人的共通信息：
 
 ```GraphQL
 query noFragments {
@@ -452,8 +438,7 @@ query noFragments {
 }
 ```
 
-The repeated fields could be extracted into a fragment and composed by
-a parent fragment or query.
+这些重复的字段可以提取进一个fragment（片段）中，然后被父级fragment（片段）或者query（查询）组合：
 
 ```GraphQL
 query withFragments {
@@ -474,12 +459,9 @@ fragment friendFields on User {
 }
 ```
 
-Fragments are consumed by using the spread operator (`...`).  All fields selected
-by the fragment will be added to the query field selection at the same level
-as the fragment invocation. This happens through multiple levels of fragment
-spreads.
+片段可以通过解构操作符(`...`)被消费掉，片段内的字段将会被添加到片段被调用的同层级选择集合，这一过程也会在多级别片段中解构发生。
 
-For example:
+例如:
 
 ```GraphQL
 query withNestedFragments {
@@ -504,26 +486,24 @@ fragment standardProfilePic on User {
 }
 ```
 
-The queries `noFragments`, `withFragments`, and `withNestedFragments` all
-produce the same response object.
+`noFragments`，`withFragments`和`withNestedFragments`三个查询都会产生相同的返回对象。
 
 
 ### Type Conditions/类型条件
 
 TypeCondition : on NamedType
 
-Fragments must specify the type they apply to. In this example, `friendFields`
-can be used in the context of querying a `User`.
+类型条件 -> on 具名类型
 
-Fragments cannot be specified on any input value (scalar, enumeration, or input
-object).
+片段需要指定应用于的目标类型，在上述案例中，`friendFields`在查询`User`的上下文中使用。
 
-Fragments can be specified on object types, interfaces, and unions.
+片段不能应用于任何输入值（标量值，枚举型或者输入型对象）。
 
-Selections within fragments only return values when concrete type of the object
-it is operating on matches the type of the fragment.
+片段可应用与对象型，接口和联合。
 
-For example in this query on the Facebook data model:
+只有在对象的具体类型和片段的应用目标类型匹配的时候，片段内的选择集合才会返回值。
+
+譬如，下列Facebook数据模型查询：
 
 ```GraphQL
 query FragmentTyping {
@@ -547,10 +527,7 @@ fragment pageFragment on Page {
 }
 ```
 
-The `profiles` root field returns a list where each element could be a `Page` or a
-`User`. When the object in the `profiles` result is a `User`, `friends` will be
-present and `likers` will not. Conversely when the result is a `Page`, `likers`
-will be present and `friends` will not.
+`profiles`根字段将会返回一个列表，其中的元素可能是`Page`或者`User`类型。当`profiles`内的对象是`User`类型时，`friends`会出现，而`likers`不会。反之当结果内的对象是`Page`时，`likers`会出现，`friends`则不会。
 
 ```json
 {
@@ -572,10 +549,9 @@ will be present and `friends` will not.
 
 InlineFragment : ... TypeCondition? Directives? SelectionSet
 
-Fragments can be defined inline within a selection set. This is done to
-conditionally include fields based on their runtime type. This feature of
-standard fragment inclusion was demonstrated in the `query FragmentTyping`
-example. We could accomplish the same thing using inline fragments.
+内联/行内片段 -> ... 类型条件？ 指令？ 选择集合？
+
+片段可以在选择集合内以内联格式定义，这用于根据运行时类型条件式地引入字段。这个特性的标准片段引入版本在`query FragmentTyping`中已经演示，我们也可以使用内联片段的方式来实现：
 
 ```GraphQL
 query inlineFragmentTyping {
@@ -595,9 +571,7 @@ query inlineFragmentTyping {
 }
 ```
 
-Inline fragments may also be used to apply a directive to a group of fields.
-If the TypeCondition is omitted, an inline fragment is considered to be of the
-same type as the enclosing context.
+内联片段也用于将指令应用于一群字段的场景。如果省略了类型条件，片段则被视为等同于封装所在的上下文。
 
 ```GraphQL
 query inlineFragmentNoType($expandedInfo: Boolean) {
@@ -627,11 +601,20 @@ Value[Const] :
   - ListValue[?Const]
   - ObjectValue[?Const]
 
-Field and directive arguments accept input values of various literal primitives;
-input values can be scalars, enumeration values, lists, or input objects.
-
-If not defined as constant (for example, in {DefaultValue}), input values can be
-specified as a variable. List and inputs objects may also contain variables (unless defined to be constant).
+值 ->
+ - 变量
+ - 整数值
+ - 浮点值
+ - 字符串值
+ - 布尔值
+ - 空值
+ - 枚举值
+ - 列表值
+ - 对象值
+ 
+ 字段和指令的参数接受各种原始类型的输入值，输入值可以是标量值、枚举值、列表值或者输入型对象。
+ 
+如果没有定义为常量（例如，{DefaultValue}（默认值）），输入值就可以被指定为变量，列表和输入对象也可以包含变量（除非被定义为常量）。
 
 
 ### Int Value/整数值
@@ -648,7 +631,7 @@ Digit :: one of 0 1 2 3 4 5 6 7 8 9
 
 NonZeroDigit :: Digit but not `0`
 
-An Int number is specified without a decimal point or exponent (ex. `1`).
+指定整数不应该使用小数点或指数符号。(譬如：`1`)
 
 
 ### Float Value/浮点值
@@ -666,15 +649,14 @@ ExponentIndicator :: one of `e` `E`
 
 Sign :: one of + -
 
-A Float number includes either a decimal point (ex. `1.0`) or an exponent
-(ex. `1e50`) or both (ex. `6.0221413e23`).
+指定浮点数需要包含小数点(例如：`1.0`)或者指数符号(例如：`1e50`)或者两者(例如：`6.0221413e23`)。
 
 
 ### Boolean Value/布尔值
 
 BooleanValue : one of `true` `false`
 
-The two keywords `true` and `false` represent the two boolean values.
+`true`和`false`两个关键字表示布尔型的两个值。
 
 
 ### String Value/字符串值
@@ -692,62 +674,56 @@ EscapedUnicode :: /[0-9A-Fa-f]{4}/
 
 EscapedCharacter :: one of `"` \ `/` b f n r t
 
-Strings are sequences of characters wrapped in double-quotes (`"`). (ex.
-`"Hello World"`). White space and other otherwise-ignored characters are
-significant within a string value.
+字符串是一系列由双引号(`"`)包起来的字符，譬如`"Hello World"`。字符串内的空白符和其他无语义字符都对字符串有影响。
 
-Note: Unicode characters are allowed within String value literals, however
-GraphQL source must not contain some ASCII control characters so escape
-sequences must be used to represent these characters.
+Note: 字符串值字面量内是允许Unicode字符的，但是GraphQL源文本不允许ASCII控制符，因此如要使用这些字符，则需对其进行转义。
 
-**Semantics**
+**Semantics/语义**
 
 StringValue :: `""`
 
-  * Return an empty Unicode character sequence.
+  * 返回空Unicode字符序列。
 
 StringValue :: `"` StringCharacter+ `"`
 
-  * Return the Unicode character sequence of all {StringCharacter}
-    Unicode character values.
+  * 返回{StringCharacter}的Unicode字符序列。
 
 StringCharacter :: SourceCharacter but not `"` or \ or LineTerminator
 
-  * Return the character value of {SourceCharacter}.
+  * 返回{SourceCharacter}的字符值。
 
 StringCharacter :: \u EscapedUnicode
 
-  * Return the character whose code unit value in the Unicode Basic Multilingual
-    Plane is the 16-bit hexadecimal value {EscapedUnicode}.
+  * 返回{EscapedUnicode}在Unicode基本多文种平面内的16进制对应代码单元。<small>译者案：详情查询Unicode字符平面映射</small>
 
 StringCharacter :: \ EscapedCharacter
 
-  * Return the character value of {EscapedCharacter} according to the table below.
+  * 返回{EscapedCharacter}在此对照表中的值。
 
-| Escaped Character | Code Unit Value | Character Name               |
-| ----------------- | --------------- | ---------------------------- |
-| `"`               | U+0022          | double quote                 |
-| `\`               | U+005C          | reverse solidus (back slash) |
-| `/`               | U+002F          | solidus (forward slash)      |
-| `b`               | U+0008          | backspace                    |
-| `f`               | U+000C          | form feed                    |
-| `n`               | U+000A          | line feed (new line)         |
-| `r`               | U+000D          | carriage return              |
-| `t`               | U+0009          | horizontal tab               |
+| 转义后字符 | 字符单元值  | 字符名称  |
+| -------- | ---------- | -------- |
+| `"`      | U+0022     | 双引号    |
+| `\`      | U+005C     | 反斜线    |
+| `/`      | U+002F     | 正斜线    |
+| `b`      | U+0008     | 退格      |
+| `f`      | U+000C     | 换页符    |
+| `n`      | U+000A     | 换行符    |
+| `r`      | U+000D     | 回车符    |
+| `t`      | U+0009     | 水平制表符|
 
 
 ### Null Value/空值
 
 NullValue : `null`
 
-Null values are represented as the keyword {null}.
+{null}代表空值。
 
-GraphQL has two semantically different ways to represent the lack of a value:
+GraphQL在语义上有两种方式来表示一个缺值：
 
-  * Explicitly providing the literal value: {null}.
-  * Implicitly not providing a value at all.
+  * 显式，使用字面量值：{null}。
+  * 隐式，不使用任何值。
 
-For example, these two field calls are similar, but are not identical:
+例如：下列两个相似的字段查询并不是一样的：
 
 ```GraphQL
 {
@@ -756,25 +732,16 @@ For example, these two field calls are similar, but are not identical:
 }
 ```
 
-The first has explictly provided {null} to the argument "arg", while the second
-has implicitly not provided a value to the argument "arg". These two forms may
-be interpreted differently. For example, a mutation representing deleting a
-field vs not altering a field, respectively. Neither form may be used for an
-input expecting a Non-Null type.
+前者显式使用了{null}给arg参数，后者隐式，没有给arg参数以值。两个形式会被不同解读，譬如一个mutation操作中，会表示成删除一个字段或者不改变一个字段。两者都不能用于非空输入类型参数。
 
-Note: The same two methods of representing the lack of a value are possible via
-variables by either providing the a variable value as {null} and not providing
-a variable value at all.
+Note: 在使用变量表示一个缺值的时候，也可以使用这两种方法，亦即显式提供{null}，或者隐式，不提供任何值。
 
 
 ### Enum Value/枚举值
 
 EnumValue : Name but not `true`, `false` or `null`
 
-Enum values are represented as unquoted names (ex. `MOBILE_WEB`). It is
-recommended that Enum values be "all caps". Enum values are only used in
-contexts where the precise enumeration type is known. Therefore it's not
-necessary to supply an enumeration type name in the literal.
+枚举值表现为没有引号包裹的名称，规范建议使用全大写字母表示枚举值，枚举值仅用于准确枚举类型可用的上下文中，因此枚举类型命名上不必使用字面量。
 
 
 ### List Value/列表值
@@ -783,28 +750,26 @@ ListValue[Const] :
   - [ ]
   - [ Value[?Const]+ ]
 
-Lists are ordered sequences of values wrapped in square-brackets `[ ]`. The
-values of a List literal may be any value literal or variable (ex. `[1, 2, 3]`).
+列表是包在方括号`[ ]`中的有序值序列，列表值可以是任意字面量值或者变量，譬如`[1, 2, 3]`。
 
-Commas are optional throughout GraphQL so trailing commas are allowed and repeated
-commas do not represent missing values.
+因为GraphQL中逗号是可选的，因此末尾逗号和重复逗号都是允许的，而不会代表空缺值。
 
-**Semantics**
+**Semantics/语义**
 
 ListValue : [ ]
 
-  * Return a new empty list value.
+  * 返回空列表值。
 
 ListValue : [ Value+ ]
 
-  * Let {inputList} be a new empty list value.
-  * For each {Value+}
-    * Let {value} be the result of evaluating {Value}.
-    * Append {value} to {inputList}.
-  * Return {inputList}
+  * 使{inputList}为空.
+  * 对于每一个{Value+}
+    * 让{value}变成{Value}求值后的值。
+    * 将{value}添加到{inputList}尾部。
+  * 返回{inputList}。
 
 
-### Input Object Values/输入对象值
+### Input Object Values/输入型对象值
 
 ObjectValue[Const] :
   - { }
@@ -812,17 +777,13 @@ ObjectValue[Const] :
 
 ObjectField[Const] : Name : Value[?Const]
 
-Input object literal values are unordered lists of keyed input values wrapped in
-curly-braces `{ }`.  The values of an object literal may be any input value
-literal or variable (ex. `{ name: "Hello world", score: 1.0 }`). We refer to
-literal representation of input objects as "object literals."
+输入型对象是无需键值列表，使用花括号`{ }`包起来。对象的值可以是输入字面量值或者变量值(例如：`{ name: "Hello world", score: 1.0 }`)。我们将输入型对象的字面量表示法称作“对象字面量”。
 
-**Input object fields are unordered**
+**Input object fields are unordered/输入型对象的字段是无序的**
 
-Input object fields may be provided in any syntactic order and maintain
-identical semantic meaning.
+输入型字段能以各种句法顺位排列，而表示相同的语义。
 
-These two queries are semantically identical:
+下面两个查询在语义上是一样的：
 
 ```GraphQL
 {
@@ -836,20 +797,20 @@ These two queries are semantically identical:
 }
 ```
 
-**Semantics**
+**Semantics/语义**
 
 ObjectValue : { }
 
-  * Return a new input object value with no fields.
+  * 返回一个无字段的输入型对象。
 
 ObjectValue : { ObjectField+ }
 
-  * Let {inputObject} be a new input object value with no fields.
-  * For each {field} in {ObjectField+}
-    * Let {name} be {Name} in {field}.
-    * Let {value} be the result of evaluating {Value} in {field}.
-    * Add a field to {inputObject} of name {name} containing value {value}.
-  * Return {inputObject}
+  * 使{inputObject}为一个无字段的输入型对象。
+  * 对于{inputObject}中的每一个{field}。
+    * 使{field}的{Name}为{name}。
+    * 使{field}的{Value}为{value}求值后的值。
+    * 给{inputObject}添加一个字段，键为{name}，值为{value}。
+  * 返回{inputObject}
 
 
 ## Variables/变量
@@ -862,17 +823,19 @@ VariableDefinition : Variable : Type DefaultValue?
 
 DefaultValue : = Value[Const]
 
-A GraphQL query can be parameterized with variables, maximizing query reuse,
-and avoiding costly string building in clients at runtime.
+变量 -> $ 名称
 
-If not defined as constant (for example, in {DefaultValue}), a {Variable} can be
-supplied for an input value.
+变量定义 -> 变量：类型 默认值？
 
-Variables must be defined at the top of an operation and are in scope
-throughout the execution of that operation.
+默认值 -> 值<small>常量</small>
 
-In this example, we want to fetch a profile picture size based on the size
-of a particular device:
+GraphQL查询可以使用变量作为参数，已最大化查询重用，避免客户端运行时耗费巨大的字符串重建。
+
+如果没有被定义为常量（例如{DefaultValue}），{Variable}就能被赋予一个输入类型。
+
+变量必须在查询的顶部定义，并在整个操作的执行周期范围内可用。
+
+下面例子中，我们想要根据特定设备大小获取一个对应大小的档案图片：
 
 ```GraphQL
 query getZuckProfile($devicePicSize: Int) {
@@ -884,10 +847,7 @@ query getZuckProfile($devicePicSize: Int) {
 }
 ```
 
-Values for those variables are provided to a GraphQL service along with a
-request so they may be substituted during execution. If providing JSON for the
-variables' values, we could run this query and request profilePic of
-size `60` width:
+在向GraphQL请求的时候，这些参数的值也需要一并发送，以便执行期间用以替换。假设以JSON发送参数，我们请求大小为`60`宽度的档案照片：
 
 ```json
 {
@@ -895,13 +855,9 @@ size `60` width:
 }
 ```
 
-**Variable use within Fragments**
+**Variable use within Fragments/片段内的参数**
 
-Query variables can be used within fragments. Query variables have global scope
-with a given operation, so a variable used within a fragment must be declared
-in any top-level operation that transitively consumes that fragment. If
-a variable is referenced in a fragment and is included by an operation that does
-not define that variable, the operation cannot be executed.
+片段内也可以使用查询变量，变量在整个操作中拥有全局作用域，所以片段内变量也需要在顶部操作上定义，以便传递到片段上消费。如果一个参数被片段所引用，包含这个片段的操作并没有定义这个变量，那么这个操作将不会被执行。
 
 
 ## Input Types/输入类型
@@ -919,30 +875,41 @@ NonNullType :
   - NamedType !
   - ListType !
 
-GraphQL describes the types of data expected by query variables. Input types
-may be lists of another input type, or a non-null variant of any other
-input type.
+类型 ->
+  - 具名类型
+  - 列表类型
+  - 非空类型
+  
+具名类型 -> 命名
 
-**Semantics**
+列表类型 -> \[ 类型 \]
+
+非空类型 ->
+  - 具名类型!  
+  - 列表类型!
+
+GraphQL描述查询参数需要的类型为输入类型，可以是某种其他输入类型的列表或者其他输入类型的非空变体。
+
+**Semantics/语义**
 
 Type : Name
 
-  * Let {name} be the string value of {Name}
-  * Let {type} be the type defined in the Schema named {name}
-  * {type} must not be {null}
-  * Return {type}
+  * 使{name}为{Name}的值。
+  * 使{type}为Schema中定义的类型的{name}
+  * {type}不可为{null}
+  * 返回{type}
 
 Type : [ Type ]
 
-  * Let {itemType} be the result of evaluating {Type}
-  * Let {type} be a List type where {itemType} is the contained type.
-  * Return {type}
+  * 使{itemType}为{Type}求值后的值。
+  * 使{type}为一个列表类型，其中内部类型为{itemType}。
+  * 返回{type}。
 
 Type : Type !
 
-  * Let {nullableType} be the result of evaluating {Type}
-  * Let {type} be a Non-Null type where {nullableType} is the contained type.
-  * Return {type}
+  * 使{nullableType}为{Type}计算后的值。
+  * 使{Type}为非空类型，其中内部类型为{nullableType}。
+  * 返回{type}。
 
 
 ## Directives/指令
@@ -951,18 +918,14 @@ Directives : Directive+
 
 Directive : @ Name Arguments?
 
-Directives provide a way to describe alternate runtime execution and type
-validation behavior in a GraphQL document.
+指令 -> @名称 参数?
+ 
+指令为GraphQL文档提供了另一种运行时执行行为和类型验证行为。
 
-In some cases, you need to provide options to alter GraphQL's execution
-behavior in ways field arguments will not suffice, such as conditionally
-including or skipping a field. Directives provide this by describing additional information to the executor.
+有时候，你需要改变GraphQL的执行行为，而参数并不满足要求，譬如条件性的包含或者跳过一个字段。指令通过向执行器描述附加信息来完成这种需求。
 
-Directives have a name along with a list of arguments which may accept values
-of any input type.
+指令需要一个名字和一组参数，可以接受任意输入类型。
 
-Directives can be used to describe additional information for types, fields, fragments
-and operations.
+指令可以用于描述类型、字段、片段、操作的附加信息。
 
-As future versions of GraphQL adopt new configurable execution capabilities,
-they may be exposed via directives.
+将来版本的GraphQL会加入可配置的执行能力，他们则可能表现为指令。

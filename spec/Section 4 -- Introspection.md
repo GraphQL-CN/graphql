@@ -8,7 +8,7 @@ three fields: id, name, and birthday.
 
 For example, given a server with the following type definition:
 
-```
+```GraphQL
 type User {
   id: String
   name: String
@@ -119,7 +119,7 @@ of the query operation.
 
 The schema of the GraphQL schema introspection system:
 
-```
+```GraphQL
 type __Schema {
   types: [__Type!]!
   queryType: __Type!
@@ -312,7 +312,7 @@ of named input values.
 
 For example the input object `Point` could be defined as:
 
-```
+```GraphQL
 input Point {
   x: Int
   y: Int
