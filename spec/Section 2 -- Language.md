@@ -1,6 +1,6 @@
 # Language/语言
 
-客户端使用GraphQL查询语言来请求GraphQL服务，我们称这些请求为文档，文档包含操作（queries/查询，mutations/修改，和subscriptions订阅）和片段（用于组合重用的共有单元）。
+客户端使用GraphQL查询语言来请求GraphQL服务，我们称这些请求为文档，文档包含操作（queries/查询，mutations/更改，和subscriptions订阅）和片段（用于组合重用的共有单元）。
 
 GraphQL文档的语法中，将终端符号视为记号，即独立词法单元。这些记号以词法方式定义，满足源字符模式（用`::`定义）。<small>译者案：翻译中使用->表示</small>
 
@@ -184,10 +184,10 @@ OperationType : one of `query` `mutation` `subscription`
   
 GraphQL做了三类操作模型：
   * query/查询 - 只读获取
-  * mutation/改变 - 先写入再获取
+  * mutation/更改 - 先写入再获取
   * subscription/订阅 - 一个长期请求，根据源事件获取数据
 
-每一个操作都以一个可选操作名和选择集合表示，例如这个mutation（改变）操作，对一个story点赞（like），然后获取了被点赞次数：
+每一个操作都以一个可选操作名和选择集合表示，例如这个mutation（更改）操作，对一个story点赞（like），然后获取了被点赞次数：
 
 ```GraphQL
 mutation {
