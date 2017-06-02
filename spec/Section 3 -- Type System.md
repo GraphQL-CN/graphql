@@ -1,95 +1,49 @@
-# Type System
+# Type System/类型系统
 
-The GraphQL Type system describes the capabilities of a GraphQL server and is
-used to determine if a query is valid. The type system also describes the
-input types of query variables to determine if values provided at runtime
-are valid.
+GraphQL的类型系统用于描述服务器的能力以及判断一个查询是否有效。类系统也描述了查询参数的输入类型，用于运行时检查有效性。
 
-A GraphQL server's capabilities are referred to as that server's "schema".
-A schema is defined in terms of the types and directives it supports.
+GraphQL服务器的能力是同schema来描述，schema使用其支持的类型和指令来定义。
 
-A given GraphQL schema must itself be internally valid. This section describes
-the rules for this validation process where relevant.
+一个给定GraphQL schema其自身首先必须要通过内部有效性验证，本节将会讲述这个验证过程的相关规则。
 
-A GraphQL schema is represented by a root type for each kind of operation:
-query, mutation, and subscription; this determines the place in the type system
-where those operations begin.
+一个GraphQL schema使用每种操作的根级类型表示：query/查询、mutation/更改和subscription/订阅，这表示schema是这三种操作开始的地方。
 
-All types within a GraphQL schema must have unique names. No two provided types
-may have the same name. No provided type may have a name which conflicts with
-any built in types (including Scalar and Introspection types).
+所有GraphQL schema内的类型都必须要有唯一的名字，任意两个类型都不应该有相同的名字，任意类型也不应该有和内建类型冲突的名字（包含Scalar/标量和Introspection/内省类型）。
 
-All directives within a GraphQL schema must have unique names. A directive
-and a type may share the same name, since there is no ambiguity between them.
+所有GraphQL schema内的指令也必须拥有唯一的名字，指令和类型可以拥有相同的名字，因为两者之间并没有歧义。
 
-All types and directives defined within a schema must not have a name which
-begins with {"__"} (two underscores), as this is used exclusively by GraphQL's
-introspection system.
+所有schema内定义的类型和指令都不能以{"__"}（双下划线）开头命名，因为这是GraphQL内省系统专用。
 
 
 ## Types
 
-The fundamental unit of any GraphQL Schema is the type. There are eight kinds
-of types in GraphQL.
+任何GraphQL Schema的最基本单元都是类型，GraphQL中有8种类型。
 
-The most basic type is a `Scalar`. A scalar represents a primitive value, like
-a string or an integer. Oftentimes, the possible responses for a scalar field
-are enumerable. GraphQL offers an `Enum` type in those cases, where the type
-specifies the space of valid responses.
+最基本的类型是`Scalar`/标量，一个标量代表一个原始值，例如字符串或者整数。有时候，一个标量字段的返回值可能是可枚举的，对应这种场景，GraphQL提速了`Enum`/枚举类型，其指定了响应结果的有效范围。
 
-Scalars and Enums form the leaves in response trees; the intermediate levels are
-`Object` types, which define a set of fields, where each field is another
-type in the system, allowing the definition of arbitrary type hierarchies.
+标量和枚举型组成了响应结果树的叶子节点，而中间的分支节点则是`Object`/对象类型，其定义了一套字段，每个字段是系统中的另一个类型，从而能够定义任意层次的类型层级。
 
-GraphQL supports two abstract types: interfaces and unions.
+GraphQL支持两种抽象类型：interface/接口和union/联合。
 
-An `Interface` defines a list of fields; `Object` types that implement that
-interface are guaranteed to implement those fields. Whenever the type system
-claims it will return an interface, it will return a valid implementing type.
+`Interface`定义了一系列字段，`Object`类型通过实现了其中的字段来实现它。当类型系统表明要返回一个接口时，其返回的都是一个实现这个接口的类型。
 
-A `Union` defines a list of possible types; similar to interfaces, whenever the
-type system claims a union will be returned, one of the possible types will be
-returned.
+`Union`定义了一个可能类型的列表，与接口相似，当系统表明要返回一个联合时，其返回的是联合中的一个类型。
 
-All of the types so far are assumed to be both nullable and singular: e.g. a scalar
-string returns either null or a singular string. The type system might want to
-define that it returns a list of other types; the `List` type is provided for
-this reason, and wraps another type. Similarly, the `Non-Null` type wraps
-another type, and denotes that the result will never be null. These two types
-are referred to as "wrapping types"; non-wrapping types are referred to as
-"base types". A wrapping type has an underlying "base type", found by
-continually unwrapping the type until a base type is found.
+这些类型都是可为空且为单数，譬如，一个标量字符串会返回一个null或者一个字符串。通常有需要表示某个类型的列表，于是GraphQL中提供了`List`类型，将其他类型封装在其中。类似的`Non-Null`类型也是封装其他类型，用以标注返回结果不可为空。这两种类型称为“封装类型”，非封装类型称为基础类型，每个封装类型里面都有一个基础类型，通过不断解封装来找到基础类型。
 
-Finally, oftentimes it is useful to provide complex structs as inputs to
-GraphQL queries; the `Input Object` type allows the schema to define exactly
-what data is expected from the client in these queries.
+向GraphQL提供复杂结构作为输入参数是十分有用的，GraphQL为此提供了`Input Object`类型，让客户端从schema中获知服务端具体需要什么样的数据。
 
 
-### Scalars
+### Scalars/标量
 
-As expected by the name, a scalar represents a primitive value in GraphQL.
-GraphQL responses take the form of a hierarchical tree; the leaves on these trees
-are GraphQL scalars.
+如名字所示，GraphQL中一个标量代表这一个原始值，GraphQL的响应采用的是树形层级结构，其叶子节点即是标量。
 
-All GraphQL scalars are representable as strings, though depending on the
-response format being used, there may be a more appropriate primitive for the
-given scalar type, and server should use those types when appropriate.
+所有GraphQL标量都能以字符串形式表示，虽然取决于所用的返回格式，可能有准确的原始类型来表示指定标量，服务器在适当的时候也应采取这种类型。
 
-GraphQL provides a number of built-in scalars, but type systems can add
-additional scalars with semantic meaning. For example, a GraphQL system could
-define a scalar called `Time` which, while serialized as a string, promises to
-conform to ISO-8601. When querying a field of type `Time`, you can then rely on
-the ability to parse the result with an ISO-8601 parser and use a
-client-specific primitive for time. Another example of a potentially useful
-custom scalar is `Url`, which serializes as a string, but is guaranteed by
-the server to be a valid URL.
+GraphQL提供了一些内建标量，类型系统也允许根据语义添加其他标量。假设GraphQL中要定义一个标量`Time`/时间，可将字符串转换成ISO-8601的格式，当查询一个`Time`字段时，客户端可以使用ISO-8601解析器，将这个字段类型转换成客户端特有的原始类型。另一个有潜在用途的标量是`Url`，通常会序列化成字符串，但是会由服务器保证是有效的URL。
 
-A server may omit any of the built-in scalars from its schema, for example if a
-schema does not refer to a floating-point number, then it will not include the
-`Float` type. However, if a schema includes a type with the name of one of the
-types described here, it must adhere to the behavior described. As an example,
-a server must not include a type called `Int` and use it to represent
-128-bit numbers, or internationalization information.
+服务器可能会在schema中省略内建标量，譬如，服务器并未使用浮点数，那么它可能并不会包含`Float`类型。 但是一旦schema包含了本规范所述的类型，那么一定会继承本规范描述的对应行为，譬如，服务器一定不会使用名为`Int`的类型去表示128-bit的数字，或者国际化信息。
+
 
 **Result Coercion**
 
