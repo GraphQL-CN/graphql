@@ -471,7 +471,7 @@ type Contact {
 
 **Result Coercion/结果类型转换**
 
-接口类型应该有办法判定给定结果对应哪一个对象类型，一旦确定，接口的结果类型转换和对象的接口转换采用一样的方法。
+接口类型应该能够判定给定结果对应哪一个对象类型，一旦确定，接口的结果类型转换和对象的接口转换采用一样的方法。
 
 **Input Coercion/输入类型转换**
 
@@ -541,23 +541,19 @@ type SearchQuery {
 
 **Result Coercion/结果类型转换**
 
-The union type should have some way of determining which object a given result
-corresponds to. Once it has done so, the result coercion of the union is the
-same as the result coercion of the object.
+联合类型应该能够判定给定结果对应哪一个对象类型，一旦确定，联合的结果类型转换和对象的接口转换采用一样的方法。
 
 **Input Coercion/输入类型转换**
 
-Unions are never valid inputs.
+联合类型不可作为有效输入类型。
 
 
-#### Union type validation
+#### Union type validation/联合类型验证
 
-Union types have the potential to be invalid if incorrectly defined.
+联合类型可能因为定义的不严谨而导致潜在的无效性。
 
-1. The member types of a Union type must all be Object base types;
-   Scalar, Interface and Union types may not be member types of a Union.
-   Similarly, wrapping types may not be member types of a Union.
-2. A Union type must define one or more unique member types.
+1. 联合的成员类型必须是对象基础类型；标量、接口和联合都不能作为联合的成员类型。同样的，封装类型也不能是联合的成员类型。
+2. 一个联合类型必须定义一个或者多个不同的成员类型。
 
 ### Enums/枚举型
 
