@@ -15,7 +15,7 @@ GraphQL服务器的能力是同schema来描述，schema使用其支持的类型�
 所有schema内定义的类型和指令都不能以{"__"}（双下划线）开头命名，因为这是GraphQL内省系统专用。
 
 
-## Types
+## Types/类型
 
 任何GraphQL Schema的最基本单元都是类型，GraphQL中有8种类型。
 
@@ -42,184 +42,110 @@ GraphQL支持两种抽象类型：interface/接口和union/联合。
 
 GraphQL提供了一些内建标量，类型系统也允许根据语义添加其他标量。假设GraphQL中要定义一个标量`Time`/时间，可将字符串转换成ISO-8601的格式，当查询一个`Time`字段时，客户端可以使用ISO-8601解析器，将这个字段类型转换成客户端特有的原始类型。另一个有潜在用途的标量是`Url`，通常会序列化成字符串，但是会由服务器保证是有效的URL。
 
-服务器可能会在schema中省略内建标量，譬如，服务器并未使用浮点数，那么它可能并不会包含`Float`类型。 但是一旦schema包含了本规范所述的类型，那么一定会继承本规范描述的对应行为，譬如，服务器一定不会使用名为`Int`的类型去表示128-bit的数字，或者国际化信息。
+服务器可能会在schema中省略内建标量，譬如，服务器并未使用浮点数，那么它可能并不会包含`Float`类型。 但是一旦schema包含了本规范所述的类型，那么一定会遵守本规范描述的对应行为，譬如，服务器一定不会使用名为`Int`的类型去表示128-bit的数字，或者国际化信息。
 
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-A GraphQL server, when preparing a field of a given scalar type, must uphold the
-contract the scalar type describes, either by coercing the value or
-producing an error.
+当GraphQL服务器准备一个标量字段的时候，必须遵守此标量的描述协议，或者强制转换原始值，或者抛出错误。
 
-For example, a GraphQL server could be preparing a field with the scalar type
-`Int` and encounter a floating-point number. Since the server must not break the
-contract by yielding a non-integer, the server should truncate the fractional
-value and only yield the integer value. If the server encountered a boolean
-`true` value, it should return `1`. If the server encountered a string, it may
-attempt to parse the string for a base-10 integer value. If the server
-encounters some value that cannot be reasonably coerced to an `Int`, then it
-must raise a field error.
+例如：当服务器在准备一个`Int`型标量时，收到的是一个浮点数，如果服务器直接输出这个值，那势必会打破协定，所以服务器可以剔除小数部分，只保留整数部分，然后返回整数值，如果服务器收到的是布尔型值`true`，那么就可以返回`1`，如果服务器收到的是字符串型，那么就尝试以10为底，解析字符串为整数，如果服务器没法将某些值转换成`Int`，那么就只能抛出错误。
 
-Since this coercion behavior is not observable to clients of the GraphQL server,
-the precise rules of coercion are left to the implementation. The only
-requirement is that the server must yield values which adhere to the expected
-Scalar type.
+因为这个转换行为对于客户端是不可见的，所以准确的转换规则全由实现指定，规范对其的唯一要求就是输出值需遵守标量协议。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-If a GraphQL server expects a scalar type as input to an argument, coercion
-is observable and the rules must be well defined. If an input value does not
-match a coercion rule, a query error must be raised.
+如果GraphQL的某个参数要求标量作为输入，其类型转换显而易见地必须良好定义。如果输入值无法满足转换规则，则必须抛出错误、
 
-GraphQL has different constant literals to represent integer and floating-point
-input values, and coercion rules may apply differently depending on which type
-of input value is encountered. GraphQL may be parameterized by query variables,
-the values of which are often serialized when sent over a transport like HTTP. Since
-some common serializations (ex. JSON) do not discriminate between integer
-and floating-point values, they are interpreted as an integer input value if
-they have an empty fractional part (ex. `1.0`) and otherwise as floating-point
-input value.
+GraphQL对于整数和浮点数输入值有不同的字面量表示方式，其类型转换也对应输入类型做转换。GraphQL可以使用变量作为参数，这些变量的值像是在HTTP的传输中通常会被序列化，由于有些序列化方法并不区分整数和浮点数（譬如JSON），可能因为一个数没有有效小数值而被当作整数而不是浮点数。
 
-For all types below, with the exception of Non-Null, if the explicit value
-{null} is provided, then the result of input coercion is {null}.
+下列所有类型中，除了Non-Null之外，如果显式提供了{null}，那么其输入结果就会被转换成{null}。
 
-**Built-in Scalars**
+**Built-in Scalars/内建标量**
 
-GraphQL provides a basic set of well-defined Scalar types. A GraphQL server
-should support all of these types, and a GraphQL server which provide a type by
-these names must adhere to the behavior described below.
+GraphQL提供一套基本的定义良好的标量类型，每个GraphQL服务器都应该支持这些类型，并且使用这些名字的类型必须遵守下文描述的行为、
 
 
-#### Int
+#### Int/整数型
 
-The Int scalar type represents a signed 32-bit numeric non-fractional value.
-Response formats that support a 32-bit integer or a number type should use
-that type to represent this scalar.
+整数型标量类型表示一个32位有符号的无小数部分的数值。响应格式应该使用一个支持32位的整数型或者数值类型来表示这个标量类型、
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-GraphQL servers should coerce non-int raw values to Int when possible
-otherwise they must raise a field error. Examples of this may include returning
-`1` for the floating-point number `1.0`, or `2` for the string `"2"`.
+GraphQL服务器应该转换非整数型原始数据为整数型，如若不能，则必须抛出字段错误。例如，从浮点型`1.0`转换成`1`，或者从字符串型`"2"`转换成`2`。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-When expected as an input type, only integer input values are accepted. All
-other input values, including strings with numeric content, must raise a query
-error indicating an incorrect type. If the integer input value represents a
-value less than -2<sup>31</sup> or greater than or equal to 2<sup>31</sup>, a
-query error should be raised.
+当需要作为输入类型时，只接受整数型输入值。其它类型，包含字符串型数值内容，都要抛出类型不正确的查询错误。如果整数型输入值小于-2<sup>31</sup>或者大于2<sup>31</sup>，也要抛出查询错误。
 
-Note: Numeric integer values larger than 32-bit should either use String or a
-custom-defined Scalar type, as not all platforms and transports support
-encoding integer numbers larger than 32-bit.
+Note: 超过32位的整数建议使用字符串或者自定义的标量类型，因为不是所有平台和传输协议都支持超过32位精度编码额整数型数值。
 
 
-#### Float
+#### Float/浮点型
 
-The Float scalar type represents signed double-precision fractional values
-as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point).
-Response formats that support an appropriate double-precision number type
-should use that type to represent this scalar.
+浮点型标量类型表示一个有符号的双精度小数，见[IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point)。响应格式应该使用一个合适的双精度数值类型来表示这个标量类型。
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-GraphQL servers should coerce non-floating-point raw values to Float when
-possible otherwise they must raise a field error. Examples of this may include
-returning `1.0` for the integer number `1`, or `2.0` for the string `"2"`.
+GraphQL服务器应该转换非浮点型原始数据为型，如若不能，则必须抛出字段错误。例如，从整数型`1`转换成`1.0`，或者是字符串型`"2"`转换成`2.0`。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-When expected as an input type, both integer and float input values are
-accepted. Integer input values are coerced to Float by adding an empty
-fractional part, for example `1.0` for the integer input value `1`. All
-other input values, including strings with numeric content, must raise a query
-error indicating an incorrect type. If the integer input value represents a
-value not representable by IEEE 754, a query error should be raised.
+当需要作为输入类型时，接受整数型和浮点型输入值。整数型会被转换成小数部分为空的浮点数，譬如整数型输入值`1`转换成`1.0`，其他类型，包含字符串型数值类型，都要抛出类型不正确的查询错误。如果整型输入值无法使用IEEE 754方式表示，也要抛出查询错误。
 
 
-#### String
+#### String/字符串型
 
-The String scalar type represents textual data, represented as UTF-8 character
-sequences. The String type is most often used by GraphQL to represent free-form
-human-readable text. All response formats must support string representations,
-and that representation must be used here.
+字符串型标量表示UTF-8字符序列组成的文本数据。GraphQL一般使用字符串型来表示任意格式人类可读的文本。所有响应格式都必须支持字符串型表示，字符串型如下所述。
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-GraphQL servers should coerce non-string raw values to String when possible
-otherwise they must raise a field error. Examples of this may include returning
-the string `"true"` for a boolean true value, or the string `"1"` for the
-integer `1`.
+GraphQL服务器应该转换非字符串型原始数据为字符串型，如若不能，则必须抛出字段错误。例如，从布尔型true转换成`"true"`，从整型`1`转换成`"1"`。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-When expected as an input type, only valid UTF-8 string input values are
-accepted. All other input values must raise a query error indicating an
-incorrect type.
+当需要作为输入类型时，只接受有效的UTF-8字符串型输入值。其它类型都要抛出类型不正确的查询错误。
 
 
-#### Boolean
+#### Boolean/布尔型
 
-The Boolean scalar type represents `true` or `false`. Response formats should
-use a built-in boolean type if supported; otherwise, they should use their
-representation of the integers `1` and `0`.
+布尔型标量表示`true`或者`false`两个值。响应格式应该使用内建的布尔型，如不支持，则使用另外的表示法，整数型`1` 和`0`。
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-GraphQL servers should coerce non-boolean raw values to Boolean when possible
-otherwise they must raise a field error. Examples of this may include returning
-`true` for any non-zero number.
+GraphQL服务器应该转换非布尔型原始数据为布尔型，如若不能，则必须抛出字段错误。例如，将任意不为零数值转换成`true`。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-When expected as an input type, only boolean input values are accepted. All
-other input values must raise a query error indicating an incorrect type.
+当需要作为输入类型时，只接受布尔型输入值。其它类型都要抛出类型不正确的查询错误。
 
 
 #### ID
 
-The ID scalar type represents a unique identifier, often used to refetch an
-object or as the key for a cache. The ID type is serialized in the same way as
-a `String`; however, it is not intended to be human-readable. While it is
-often numeric, it should always serialize as a `String`.
+ID型标量表示一个唯一标识符，通常用于重取一个对象或者作为缓存的键。ID型使用`String`相同方式来序列化，但是它并不是为了人类可读，虽然它通常可能是数值型，但也总是序列化成`String`。
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-GraphQL is agnostic to ID format, and serializes to string to ensure consistency
-across many formats ID could represent, from small auto-increment numbers, to
-large 128-bit random numbers, to base64 encoded values, or string values of a
-format like [GUID](http://en.wikipedia.org/wiki/Globally_unique_identifier).
+GraphQL对ID的格式是不干预的，将其序列化成字符串以保证ID的多种格式之间的相容性，可以是自增数值，可以是128位大数，也可是base64编码后的值和[GUID](http://en.wikipedia.org/wiki/Globally_unique_identifier)等格式的字符串值。
 
-GraphQL servers should coerce as appropriate given the ID formats they expect.
-When coercion is not possible they must raise a field error.
+GraphQL服务器应该将给定ID格式转换成字符串，如若不能，则必须抛出字段错误。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-When expected as an input type, any string (such as `"4"`) or integer (such
-as `4`) input value should be coerced to ID as appropriate for the ID formats
-a given GraphQL server expects. Any other input value, including float input
-values (such as `4.0`), must raise a query error indicating an incorrect type.
+当需要作为输入类型时，任意字符串（譬如`"4"`）或者整数（譬如`4`）都应该被转换成给定服务器支持的ID格式。其他的输入类型，包括浮点型（譬如`4.0`）都必须抛出类型不正确的查询错误。
 
 
-### Objects
+### Objects/对象
 
-GraphQL queries are hierarchical and composed, describing a tree of information.
-While Scalar types describe the leaf values of these hierarchical queries, Objects
-describe the intermediate levels.
+GraphQL查询是层级式的可组装的，以树的形式描述了信息。其中标量类型描述了层级查询中叶子节点的值，对象则描述了中间层。
 
-GraphQL Objects represent a list of named fields, each of which yield a value of
-a specific type. Object values should be serialized as ordered maps, where the
-queried field names (or aliases) are the keys and the result of evaluating
-the field is the value, ordered by the order in which they appear in the query.
+GraphQL对象表示一个具名字段列表，每个字段会产出一个特定类型的值。对象的值应该向有序映射集（ordered maps），其中查询字段名（或者别名）作为键，字段的结果作为值，以出现在查询中的顺序来排序。
 
-All fields defined within an Object type must not have a name which begins with
-{"__"} (two underscores), as this is used exclusively by GraphQL's
-introspection system.
+对象中的所有字段都不应以{"__"}（双下划线）起头命名，因为这GraphQL内省系统专用的命名方式。
 
-For example, a type `Person` could be described as:
+例如，`Person`类型可以如下描述：
 
-```
+```GraphQL
 type Person {
   name: String
   age: Int
@@ -227,17 +153,11 @@ type Person {
 }
 ```
 
-Where `name` is a field that will yield a `String` value, and `age` is a field
-that will yield an `Int` value, and `picture` is a field that will yield a
-`Url` value.
+其中`name`产生一个`String`值，`age`产生一个`Int`值，`picture`产生一个`Url`值。
 
-A query of an object value must select at least one field. This selection of
-fields will yield an ordered map containing exactly the subset of the object
-queried, which should be represented in the order in which they were queried.
-Only fields that are declared on the object type may validly be queried on
-that object.
+对一个对象的查询必须至少指定一个字段，字段的选择集会产生一个有序映射集，其中包含被查询对象准确的子集，这个子集将以查询的顺序排序。只有在对象中声明过的字段才能被有效查询。
 
-For example, selecting all the fields of `Person`:
+譬如，查询`Person`的所有字段：
 
 ```GraphQL
 {
@@ -247,7 +167,7 @@ For example, selecting all the fields of `Person`:
 }
 ```
 
-Would yield the object:
+会产生如下对象：
 
 ```json
 {
@@ -257,7 +177,7 @@ Would yield the object:
 }
 ```
 
-While selecting a subset of fields:
+当选择字段的子集：
 
 ```GraphQL
 {
@@ -266,7 +186,7 @@ While selecting a subset of fields:
 }
 ```
 
-Must only yield exactly that subset:
+一定会产生准确的子集：
 
 ```json
 {
@@ -275,13 +195,11 @@ Must only yield exactly that subset:
 }
 ```
 
-A field of an Object type may be a Scalar, Enum, another Object type,
-an Interface, or a Union. Additionally, it may be any wrapping type whose
-underlying base type is one of those five.
+对象的字段可能是标量、枚举型、其他对象类型、接口、或者联合。也可能是其它封装类型，其下层类型是这五个之一。
 
-For example, the `Person` type might include a `relationship`:
+例如：`Person`类型可能包含`relationship`：
 
-```
+```GraphQL
 type Person {
   name: String
   age: Int
@@ -290,8 +208,7 @@ type Person {
 }
 ```
 
-Valid queries must supply a nested field set for a field that returns
-an object, so this query is not valid:
+对于字段对象的查询必须嵌套其字段集合，譬如下列查询就不是有效的：
 
 ```!graphql
 {
@@ -300,7 +217,7 @@ an object, so this query is not valid:
 }
 ```
 
-However, this example is valid:
+然而，这个案例是有效的：
 
 ```GraphQL
 {
@@ -311,7 +228,7 @@ However, this example is valid:
 }
 ```
 
-And will yield the subset of each object type queried:
+并会产生被查询的每个对象的子集：
 
 ```json
 {
@@ -322,25 +239,15 @@ And will yield the subset of each object type queried:
 }
 ```
 
-**Field Ordering**
+**Field Ordering/字段排序**
 
-When querying an Object, the resulting mapping of fields are conceptually
-ordered in the same order in which they were encountered during query execution,
-excluding fragments for which the type does not apply and fields or
-fragments that are skipped via `@skip` or `@include` directives. This ordering
-is correctly produced when using the {CollectFields()} algorithm.
+当查询一个对象时，字段的结果映射在概念上的排序顺序应该是跟查询执行期间字段被执行的顺序一致，除了片段上并不适用于当前字段的类型和被`@skip`或`@include`指令跳过的字段。这个排序由{CollectFields()}算法正确完成。
 
-Response serialization formats capable of representing ordered maps should
-maintain this ordering. Serialization formats which can only represent unordered
-maps should retain this order grammatically (such as JSON).
+表示有序映射集的响应序列化格式也应该采用同样的排序。只能表示无序映射集的序列化格式（譬如JSON）应该保证这个语法上的顺序。
 
-Producing a response where fields are represented in the same order in which
-they appear in the request improves human readability during debugging and
-enables more efficient parsing of responses if the order of properties can
-be anticipated.
+响应中字段排序和请求中一致的表示方式，提升了调试过程中对人而言的可读性，也保证了响应属性顺序相关的解析效率。
 
-If a fragment is spread before other fields, the fields that fragment specifies
-occur in the response before the following fields.
+如果一个片段在其他字段之前展开，那么片段的字段的顺位则在片段后续字段之前。
 
 ```GraphQL
 {
@@ -355,7 +262,7 @@ fragment Frag on Query {
 }
 ```
 
-Produces the ordered result:
+产生下面排序结果：
 
 ```json
 {
@@ -366,9 +273,7 @@ Produces the ordered result:
 }
 ```
 
-If a field is queried multiple times in a selection, it is ordered by the first
-time it is encountered. However fragments for which the type does not apply does
-not affect ordering.
+如果一个字段在一个选择集中被多次查询，则以第一次被执行的顺序排序，片段中不适用的字段不会影响排序。
 
 ```GraphQL
 {
@@ -390,7 +295,7 @@ fragment Matching on Query {
 }
 ```
 
-Produces the ordered result:
+产生下面排序结果：
 
 ```json
 {
@@ -400,8 +305,7 @@ Produces the ordered result:
 }
 ```
 
-Also, if directives result in fields being excluded, they are not considered in
-the ordering of fields.
+如果一个字段被指令排除，那它也不会被纳入字段排序的考量之中。
 
 ```GraphQL
 {
@@ -411,7 +315,7 @@ the ordering of fields.
 }
 ```
 
-Produces the ordered result:
+产生下面排序结果：
 
 ```json
 {
@@ -420,41 +324,33 @@ Produces the ordered result:
 }
 ```
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-Determining the result of coercing an object is the heart of the GraphQL
-executor, so this is covered in that section of the spec.
+对象类型的结果类型转换判定机制是GraphQL执行器的核心，因此将在本规范的执行器那一节覆盖这个内容。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-Objects are never valid inputs.
+对象类型不可作为有效输入类型。
 
 
-#### Object Field Arguments
+#### Object Field Arguments/对象字段参数
 
-Object fields are conceptually functions which yield values. Occasionally object
-fields can accept arguments to further specify the return value. Object field
-arguments are defined as a list of all possible argument names and their
-expected input types.
+概念上的对象字段是会产生值的函数，有时候对象字段能够接受参数来进一步指定返回值。对象字段参数在定义上是一个所有可能参数和参数输入类型的列表。
 
-All arguments defined within a field must not have a name which begins with
-{"__"} (two underscores), as this is used exclusively by GraphQL's
-introspection system.
+一个字段内的所有参数都不能以{"__"}（双下划线）起头命名，因为这GraphQL内省系统专用的命名方式。
 
-For example, a `Person` type with a `picture` field could accept an argument to
-determine what size of an image to return.
+例如，`Person`拥有一个`picture`字段，接受一个参数以返回特定大小的图片链接。
 
-```
+```GraphQL
 type Person {
   name: String
   picture(size: Int): Url
 }
 ```
 
-GraphQL queries can optionally specify arguments to their fields to provide
-these arguments.
+GraphQL查询可选择性地指定参数，以让字段返回指定参数的结果。
 
-This example query:
+譬如这个案例查询：
 
 ```GraphQL
 {
@@ -463,7 +359,7 @@ This example query:
 }
 ```
 
-May yield the result:
+可能产生这个结果：
 
 ```json
 {
@@ -472,67 +368,43 @@ May yield the result:
 }
 ```
 
-The type of an object field argument can be any Input type.
+对象字段的参数可以是任何输入类型。
 
 
-#### Object Field deprecation
+#### Object Field deprecation/对象字段弃用
 
-Fields in an object may be marked as deprecated as deemed necessary by the
-application. It is still legal to query for these fields (to ensure existing
-clients are not broken by the change), but the fields should be appropriately
-treated in documentation and tooling.
+应用在必要情况下会将对象字段标注为弃用。这样之后，查询弃用字段依然有效（为了保证既有客户端不被这个变更导致异常），但是这种字段应该在文档和工具中正确对待。
 
 
-#### Object type validation
+#### Object type validation/对象类型验证
 
-Object types have the potential to be invalid if incorrectly defined. This set
-of rules must be adhered to by every Object type in a GraphQL schema.
+对象类型可能因为定义的不严谨而导致潜在的无效性。GraphQL Schema中，以下规则必须被所有对象遵守。
 
-1. An Object type must define one or more fields.
-2. The fields of an Object type must have unique names within that Object type;
-   no two fields may share the same name.
-3. Each field of an Object type must not have a name which begins with the
-   characters {"__"} (two underscores).
-4. An object type may declare that it implements one or more unique interfaces.
-5. An object type must be a super-set of all interfaces it implements:
-   1. The object type must include a field of the same name for every field
-      defined in an interface.
-      1. The object field must be of a type which is equal to or a sub-type of
-         the interface field (covariant).
-         1. An object field type is a valid sub-type if it is equal to (the same
-            type as) the interface field type.
-         2. An object field type is a valid sub-type if it is an Object type and
-            the interface field type is either an Interface type or a Union type
-            and the object field type is a possible type of the interface field
-            type.
-         3. An object field type is a valid sub-type if it is a List type and
-            the interface field type is also a List type and the list-item type
-            of the object field type is a valid sub-type of the list-item type
-            of the interface field type.
-         4. An object field type is a valid sub-type if it is a Non-Null variant
-            of a valid sub-type of the interface field type.
-      2. The object field must include an argument of the same name for every
-         argument defined in the interface field.
-         1. The object field argument must accept the same type (invariant) as
-            the interface field argument.
-      3. The object field may include additional arguments not defined in the
-         interface field, but any additional argument must not be required.
+1. 一个对象类型必须定义一个或多个字段。
+2. 一个对象类型内的字段必须拥有这个对象类型内唯一的命名；任何两个字段都不可同名。
+3. 一个对象类型的每个字段都不能以{"__"}（双下划线）起头命名。
+4. 一个对象类型可以声明实现了一个或多个不同接口。
+5. 一个对象类型必须是所有它所实现的接口的超集：
+   1. 对象类型必须包含其接口内所有字段同名的字段。<small>译者案：此句翻译准确性待定</small>
+      1. 这个对象字段类型必须是接口字段类型等价的类型或者其子类型（协变性）。
+         1. 一个对象字段类型如果是这个接口字段类型等价（相同）的类型，那么它是一个有效子类型。
+         2. 一个对象字段类型如果是一个对象类型，且其接口字段类型是一个接口类型或者联合类型，且这个对象字段类型是这个接口字段类型的可能类型，那么它是一个有效子类型。
+         3. 一个对象字段类型如果是一个列表类型，且其接口字段类型也是一个列表类型，且这个对象字段类型的列表元素类型是接口字段类型的列表元素类型的子类型，那么它是一个有效子类型。
+         4. 一个对象字段类型如果是其接口字段类型的子类型的Non-Null（非空）变体，那么它是一个有效子类型。
+      2. 这个对象字段必须包含其接口字段上定一个所有参数的同名参数。
+         1. 这个对象字段的参数必须接受其接口字段上参数同类型的参数（逆变性）。
+      3. 这个对象字段可以包含其接口字段上未定义的附加参数，但附加参数并不是必须。
 
 
-### Interfaces
+### Interfaces/接口
 
-GraphQL Interfaces represent a list of named fields and their arguments. GraphQL
-objects can then implement an interface, which guarantees that they will
-contain the specified fields.
+GraphQL接口表示一个具名字段列表以及其参数，GraphQL对象可以实现接口，并保证包含接口中的字段。
 
-Fields on a GraphQL interface have the same rules as fields on a GraphQL object;
-their type can be Scalar, Object, Enum, Interface, or Union, or any wrapping
-type whose base type is one of those five.
+GraphQL接口上的字段拥有和GraphQL对象上相同的规则；字段类型可以是标量、对象、枚举型、接口或者联合，或者这五个类型作为基本类型的封装类型。
 
-For example, an interface may describe a required field and types such as
-`Person` or `Business` may then implement this interface.
+例如，一个接口可以描述某个必要字段的类型，譬如`Person`或者`Business`，随后实现这个接口。
 
-```
+```GraphQL
 interface NamedEntity {
   name: String
 }
@@ -548,12 +420,11 @@ type Business implements NamedEntity {
 }
 ```
 
-Fields which yield an interface are useful when one of many Object types are
-expected, but some fields should be guaranteed.
+产生接口额字段使用的场景为需要从多个对象找返回一个的情况，其中需要保证一定会有部分字段。
 
-To continue the example, a `Contact` might refer to `NamedEntity`.
+继续上述案例，`Contact`可能指代`NamedEntity`。
 
-```
+```GraphQL
 type Contact {
   entity: NamedEntity
   phoneNumber: String
@@ -561,8 +432,7 @@ type Contact {
 }
 ```
 
-This allows us to write a query for a `Contact` that can select the
-common fields.
+这将使我们能够编写查询`Contact`中通用字段的语句。
 
 ```GraphQL
 {
@@ -573,10 +443,7 @@ common fields.
 }
 ```
 
-When querying for fields on an interface type, only those fields declared on
-the interface may be queried. In the above example, `entity` returns a
-`NamedEntity`, and `name` is defined on `NamedEntity`, so it is valid. However,
-the following would not be a valid query:
+当查询一个接口类型上的字段时，只有在接口上声明的字段可是被查询。上述案例中，`entity`返回`NamedEntity`，其中`NamedEntity`中定义了`name`，所以这个查询是有效的。所以，下面这个查询是无效的：
 
 ```!graphql
 {
@@ -588,9 +455,7 @@ the following would not be a valid query:
 }
 ```
 
-because `entity` refers to a `NamedEntity`, and `age` is not defined on that
-interface. Querying for `age` is only valid when the result of `entity` is a
-`Person`; the query can express this using a fragment or an inline fragment:
+因为`entity`指代`NamedEntity`，这个接口中并没有定义`age`，所以只有在`entity`的结果为`Person`，查询`age`才有效。查询语句可以通过片段或者内联片段来表述这种情况：
 
 ```GraphQL
 {
@@ -604,44 +469,33 @@ interface. Querying for `age` is only valid when the result of `entity` is a
 }
 ```
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
-The interface type should have some way of determining which object a given
-result corresponds to. Once it has done so, the result coercion of the interface
-is the same as the result coercion of the object.
+接口类型应该有办法判定给定结果对应哪一个对象类型，一旦确定，接口的结果类型转换和对象的接口转换采用一样的方法。
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
-Interfaces are never valid inputs.
+接口类型不可作为有效输入类型。
 
 
-#### Interface type validation
+#### Interface type validation/接口类型验证
 
-Interface types have the potential to be invalid if incorrectly defined.
+接口类型可能因为定义的不严谨而导致潜在的无效性。
 
-1. An Interface type must define one or more fields.
-2. The fields of an Interface type must have unique names within that Interface
-   type; no two fields may share the same name.
-3. Each field of an Interface type must not have a name which begins with the
-   characters {"__"} (two underscores).
+1. 一个接口类型必须定义一个或多个字段。
+2. 一个接口类型内的字段必须拥有这个接口类型内唯一的命名；任何两个字段都不可同名。
+3. 一个对象类型的每个字段都不能以{"__"}（双下划线）起头命名。
 
 
-### Unions
+### Unions/联合
 
-GraphQL Unions represent an object that could be one of a list of GraphQL
-Object types, but provides for no guaranteed fields between those types.
-They also differ from interfaces in that Object types declare what interfaces
-they implement, but are not aware of what unions contain them.
+GraphQL联合表示一个对象的类型是对象类型列表中之一，但不保证这些类型之间的字段。另一个区别于接口的方面是，对象会声明其实现的接口，而不知道它被包含的联合。
 
-With interfaces and objects, only those fields defined on the type can be
-queried directly; to query other fields on an interface, typed fragments
-must be used. This is the same as for unions, but unions do not define any
-fields, so **no** fields may be queried on this type without the use of
-typed fragments.
+对于接口和对象，只可以直接查询在其中被定义的字段，如果要查询接口的其他字段，必须使用类型片段。对于联合也是一样，但是联合不定义任何字段，所以联合上**不**允许查询任何字段，除非使用类型片段。
 
-For example, we might have the following type system:
+例如，我们有以下类型系统：
 
-```
+```GraphQL
 union SearchResult = Photo | Person
 
 type Person {
@@ -659,11 +513,7 @@ type SearchQuery {
 }
 ```
 
-When querying the `firstSearchResult` field of type `SearchQuery`, the
-query would ask for all fields inside of a fragment indicating the appropriate
-type. If the query wanted the name if the result was a Person, and the height if
-it was a photo, the following query is invalid, because the union itself
-defines no fields:
+当查询`SearchQuery`类型的`firstSearchResult`字段时，查询可能需要片段的所有字段来判断类型。如果结果是`Person`，那请求其`name`，如果是`photo`，那请求`height`。下列案例是错的，因为联合上不定义任何字段：
 
 ```!graphql
 {
@@ -674,7 +524,7 @@ defines no fields:
 }
 ```
 
-Instead, the query would be:
+而正确的查询应该是：
 
 ```GraphQL
 {
@@ -689,13 +539,13 @@ Instead, the query would be:
 }
 ```
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
 The union type should have some way of determining which object a given result
 corresponds to. Once it has done so, the result coercion of the union is the
 same as the result coercion of the object.
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
 Unions are never valid inputs.
 
@@ -709,7 +559,7 @@ Union types have the potential to be invalid if incorrectly defined.
    Similarly, wrapping types may not be member types of a Union.
 2. A Union type must define one or more unique member types.
 
-### Enums
+### Enums/枚举型
 
 GraphQL Enums are a variant on the Scalar type, which represents one of a
 finite set of possible values.
@@ -717,12 +567,12 @@ finite set of possible values.
 GraphQL Enums are not references for a numeric value, but are unique values in
 their own right. They serialize as a string: the name of the represented value.
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
 GraphQL servers must return one of the defined set of possible values. If a
 reasonable coercion is not possible they must raise a field error.
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
 GraphQL has a constant literal to represent enum input values. GraphQL string
 literals must not be accepted as an enum input and instead raise a query error.
@@ -734,7 +584,7 @@ transport serializations that do not, strings may be interpreted as the enum
 input value with the same name.
 
 
-### Input Objects
+### Input Objects/输入对象
 
 Fields can define arguments that the client passes up with the query,
 to configure their behavior. These inputs can be Strings or Enums, but
@@ -750,11 +600,11 @@ An `Input Object` defines a set of input fields; the input fields are either
 scalars, enums, or other input objects. This allows arguments to accept
 arbitrarily complex structs.
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
 An input object is never a valid result.
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
 The value for an input object should be an input object literal or an unordered
 map, otherwise an error should be thrown. This unordered map should not contain
@@ -813,7 +663,7 @@ declared the input field at all.
 3. The return types of each defined field must be an Input type.
 
 
-### Lists
+### Lists/列表型
 
 A GraphQL list is a special collection type which declares the type of each
 item in the List (referred to as the *item type* of the list). List values are
@@ -821,7 +671,7 @@ serialized as ordered lists, where each item in the list is serialized as per
 the item type. To denote that a field uses a List type the item type is wrapped
 in square brackets like this: `pets: [Pet]`.
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
 GraphQL servers must return an ordered list as the result of a list type. Each
 item in the list must be the result of a result coercion of the item type. If a
@@ -830,7 +680,7 @@ particular, if a non-list is returned, the coercion should fail, as this
 indicates a mismatch in expectations between the type system and the
 implementation.
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
 When expected as an input, list values are accepted only when each item in the
 list can be accepted by the list's item type.
@@ -847,7 +697,7 @@ list type, the value is interpreted as no list being provided, and not a list of
 size one with the value {null}.
 
 
-### Non-Null
+### Non-Null/非空型
 
 By default, all types in GraphQL are nullable; the {null} value is a valid
 response for all of the above types. To declare a type that disallows null,
@@ -868,7 +718,7 @@ non-null input type is required. In addition to not accepting the value {null},
 it also does not accept omission. For the sake of simplicity nullable types
 are always optional and non-null types are always required.
 
-**Result Coercion**
+**Result Coercion/结果类型转换**
 
 In all of the above result coercions, {null} was considered a valid value.
 To coerce the result of a Non-Null type, the coercion of the wrapped type
@@ -876,7 +726,7 @@ should be performed. If that result was not {null}, then the result of coercing
 the Non-Null type is that result. If that result was {null}, then a field error
 must be raised.
 
-**Input Coercion**
+**Input Coercion/输入类型转换**
 
 If an argument or input-object field of a Non-Null type is not provided, is
 provided with the literal value {null}, or is provided with a variable that was
@@ -918,7 +768,7 @@ a non-null input type as invalid.
 1. A Non-Null type must not wrap another Non-Null type.
 
 
-## Directives
+## Directives/指令
 
 A GraphQL schema includes a list of the directives the execution
 engine supports.
@@ -965,7 +815,7 @@ must *not* be queried if either the `@skip` condition is true *or* the
 `@include` condition is false.
 
 
-## Initial types
+## Initial types/初始类型
 
 A GraphQL schema includes types, indicating where query, mutation, and
 subscription operations start. This provides the initial entry points into the
