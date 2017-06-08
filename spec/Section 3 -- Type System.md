@@ -557,75 +557,46 @@ type SearchQuery {
 
 ### Enums/枚举型
 
-GraphQL Enums are a variant on the Scalar type, which represents one of a
-finite set of possible values.
+GraphQL枚举型是基于标量类型的变体，其表示可能值的一个有限集。
 
-GraphQL Enums are not references for a numeric value, but are unique values in
-their own right. They serialize as a string: the name of the represented value.
+GraphQL枚举型并不指代数值，而是正确的唯一值。他们序列化成字符串，字符串中用名来表示值。
 
 **Result Coercion/结果类型转换**
 
-GraphQL servers must return one of the defined set of possible values. If a
-reasonable coercion is not possible they must raise a field error.
+GraphQL服务器必须返回定义中可能结果集的一个值。如果无法达成合理的类型转换，则抛出字段错误。
 
 **Input Coercion/输入类型转换**
 
-GraphQL has a constant literal to represent enum input values. GraphQL string
-literals must not be accepted as an enum input and instead raise a query error.
+GraphQL用常量字面量表示枚举型输入值，GraphQL字符串型字面量不可作为枚举型输入值，否则将抛出查询错误。
 
-Query variable transport serializations which have a different representation
-for non-string symbolic values (for example, [EDN](https://github.com/edn-format/edn))
-should only allow such values as enum input values. Otherwise, for most
-transport serializations that do not, strings may be interpreted as the enum
-input value with the same name.
+查询变量的序列化传输方式中，如果对于非字符串符号值有区别于字符串的表示方法（譬如[EDN](https://github.com/edn-format/edn)），那么就应该采用那种方法。否则就像没有这个能力的大多数序列化传输方法一样，字符串型将被转义成同名的枚举型值。
 
 
 ### Input Objects/输入对象
 
-Fields can define arguments that the client passes up with the query,
-to configure their behavior. These inputs can be Strings or Enums, but
-they sometimes need to be more complex than this.
+字段上可能会定义参数，客户端将参数合在查询中传输，从而改变字段的行为。这些输入可能是字符串型或者枚举型，但是有时候需要比这个更复杂的类型结构。
 
-The `Object` type defined above is inappropriate for re-use here, because
-`Object`s can contain fields that express circular references or references
-to interfaces and unions, neither of which is appropriate for use as an
-input argument.  For this reason, input objects have a separate type in the
-system.
+上文中定义的`Object`并不适合在这儿重用，因为`Object`可能包含循环引用或者指代了接口类型或联合类型，这俩都不适合作为输入参数。因此，输入对象才成为了这个系统中单独的类型。
 
-An `Input Object` defines a set of input fields; the input fields are either
-scalars, enums, or other input objects. This allows arguments to accept
-arbitrarily complex structs.
+`Input Object`定义了输入字段的一个集合，输入字段并不是标量、枚举型或者其他输入对象，这使参数可以接受任意的复杂结构。
 
 **Result Coercion/结果类型转换**
 
-An input object is never a valid result.
+输入对象类型不可作为有效结果类型。
 
 **Input Coercion/输入类型转换**
 
-The value for an input object should be an input object literal or an unordered
-map, otherwise an error should be thrown. This unordered map should not contain
-any entries with names not defined by a field of this input object type,
-otherwise an error should be thrown.
+输入对象类型的值应该是输入对象的字面量或者无序映射集，否则将抛出错误。这个无序映射集不应该包含这个输入对象类型中未定义的字段，否则将抛出错误。
 
-If any non-nullable fields defined by the input object do not have corresponding
-entries in the original value, were provided a variable for which a value was
-not provided, or for which the value {null} was provided, an error should
-be thrown.
+如果输入对象上定一个非空字段没有从原始值收到对应条目（譬如变量未赋值，或者赋予了{null}（空）值），则抛出错误。
 
-The result of coercion is an environment-specific unordered map defining slots
-for each field both defined by the input object type and provided by the
-original value.
+类型转换的结果是环境特定的无序映射集，其定义了由输入对象类型和原始值构成的字段。
 
-For each field of the input object type, if the original value has an entry with
-the same name, and the value at that entry is a literal value or a variable
-which was provided a runtime value, an entry is added to the result with the
-name of the field.
+对于输入对象类型中的字段，如果原始值中有条目拥有相同的名字，条目的值是一个字面量或者变量（运行时值），这个条目就被添加到结果中同名的字段上。
 
-The value of that entry in the result is the outcome of input coercing the
-original entry value according to the input coercion rules of the
-type declared by the input field.
+结果中条目的值是原始值类型转换之后的结果，类型转换的规则由输入字段的类型决定。
 
-Following are examples of Input Object coercion for the type:
+下列是输入对象类型转换的案例：
 
 ```GraphQL
 input ExampleInputObject {
@@ -634,7 +605,7 @@ input ExampleInputObject {
 }
 ```
 
-Original Value          | Variables       | Coerced Value
+原始值                   | 变量            | 转换后的值
 ----------------------- | --------------- | -----------------------------------
 `{ a: "abc", b: 123 }`  | {null}          | `{ a: "abc", b: 123 }`
 `{ a: 123, b: "123" }`  | {null}          | `{ a: "123", b: 123 }`
@@ -647,16 +618,13 @@ Original Value          | Variables       | Coerced Value
 `{ a: $var, b: 1 }`     | `{ var: null }` | `{ a: null, b: 1 }`
 `{ a: $var, b: 1 }`     | `{}`            | `{ b: 1 }`
 
-Note: there is a semantic difference between the input value
-explicitly declaring an input field's value as the value {null} vs having not
-declared the input field at all.
+Note: 输入值显式声明一个输入字段额度值为{null}和连输入字段都没声明两种情况存在语义差异。
 
-#### Input Object type validation
+#### Input Object type validation/输入对象类型验证
 
-1. An Input Object type must define one or more fields.
-2. The fields of an Input Object type must have unique names within that
-   Input Object type; no two fields may share the same name.
-3. The return types of each defined field must be an Input type.
+1. 一个输入对象类型必须定义一个或多个字段。
+2. 一个输入对象类型内的字段必须拥有这个接口类型内唯一的命名；任何两个字段都不可同名。
+3. 每个字段的返回类型必须是输入类型。
 
 
 ### Lists/列表型
