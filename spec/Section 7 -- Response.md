@@ -1,38 +1,24 @@
-# Response
+# Response/响应
 
-When a GraphQL server receives a request, it must return a well-formed
-response. The server's response describes the result of executing the requested
-operation if successful, and describes any errors encountered during the
-request.
+如果一个GraphQL服务器收到一个请求，它必须返回一个良好格式化的响应。如果请求操作执行成功，服务器的响应则描述其执行结果，否则描述执行期间遇到的错误。
 
-A response may contain both a partial response as well as encountered errors in
-the case that an error occurred on a field which was replaced with null.
+一个响应可能会包含部分是响应，部分是另一个字段上发生错误的时候，响应中这个字段的值被替换成了null。
 
 
-## Serialization Format
+## Serialization Format/序列化格式
 
-GraphQL does not require a specific serialization format. However, clients
-should use a serialization format that supports the major primitives in the
-GraphQL response. In particular, the serialization format must support
-representations of the following four primitives:
+GraphQL并不要求特定的序列化格式，然而客户端应该使用一种支持GraphQL响应中的主要原始类型的序列化格式。特别需要支持一下原始类型：
 
  * Map
  * List
  * String
  * Null
 
-Serialization formats which can represent an ordered map should preserve the
-order of requested fields as defined by {CollectFields()} in the Execution
-section. Serialization formats which can only represent unordered maps should
-retain this order grammatically (such as JSON).
+在执行一节中的{CollectFields()}的定义中，序列化格式如果支持有序映射集，那么它应该保持请求字段的顺序。只支持无序映射集的序列化格式（譬如JSON）应该保持其语法上的顺序。
 
-Producing a response where fields are represented in the same order in which
-they appear in the request improves human readability during debugging and
-enables more efficient parsing of responses if the order of properties can
-be anticipated.
+产生跟请求一致的字段顺序响应有助于提过调试过程中面向人类的可读性和属性相关的响应解析效率。
 
-A serialization format may support the following primitives, however, strings
-may be used as a substitute for those primitives.
+系列化格式应支持下列原始类型，然而String可能用于替换下列原始类型。
 
  * Boolean
  * Int
@@ -40,15 +26,11 @@ may be used as a substitute for those primitives.
  * Enum Value
 
 
-### JSON Serialization
+### JSON Serialization/JSON序列化
 
-JSON is the preferred serialization format for GraphQL, though as noted above,
-GraphQL does not require a specific serialization format. For consistency and
-ease of notation, examples of the response are given in JSON throughout the
-spec. In particular, in our JSON examples, we will represent primitives using
-the following JSON concepts:
+虽然如上所述，GraphQL并不要求一种特定的序列化格式，但是还是比较偏好于JSON。为了风格统一和易于标注，本规范中响应的案例都以JSOn的格式表示，特别需要注意的是，我们的JSON案例中，原始类型都以一下JSON概念来表示：
 
-| GraphQL Value | JSON Value        |
+| GraphQL值     | JSON值            |
 | ------------- | ----------------- |
 | Map           | Object            |
 | List          | Array             |
@@ -59,107 +41,60 @@ the following JSON concepts:
 | Float         | Number            |
 | Enum Value    | String            |
 
-**Object Property Ordering**
+**Object Property Ordering/对象属性排序**
 
-While JSON Objects are specified as an
-[unordered collection of key-value pairs](https://tools.ietf.org/html/rfc7159#section-4)
-the pairs are represented in an ordered manner. In other words, while the JSON
-strings `{ "name": "Mark", "age": 30 }` and `{ "age": 30, "name": "Mark" }`
-encode the same value, they also have observably different property orderings.
+JSON被描述为[无序键值对集合](https://tools.ietf.org/html/rfc7159#section-4)，而键值对在表示上确实有序的方式。换言之，即便JSON字符串`{ "name": "Mark", "age": 30 }`和`{ "age": 30, "name": "Mark" }`编码了相同的值，但是他们却有不同的属性表示顺序。
 
-Since the result of evaluating a selection set is ordered, the JSON object
-serialized should preserve this order by writing the object properties in the
-same order as those fields were requested as defined by query execution.
+选择集的求值结果是有序的，这个顺序来源于请求，并由查询执行器定义，因此JSON序列化可以保持这个顺序，并以这个顺序写入到对象属性中。
 
-For example, if the query was `{ name, age }`, a GraphQL server responding in
-JSON should respond with `{ "name": "Mark", "age": 30 }` and should not respond
-with `{ "age": 30, "name": "Mark" }`.
+譬如，如果查询是`{ name, age }`，则GraphQL服务器响应的JSON会是`{ "name": "Mark", "age": 30 }`而不是`{ "age": 30, "name": "Mark" }`。
 
-NOTE: This does not violate the JSON spec, as clients may still interpret
-objects in the response as unordered Maps and arrive at a valid value.
+NOTE: 这并没有破坏JSON规范，因为客户端还是会将响应转换成无序映射集的有效值。
 
 
-## Response Format
+## Response Format/响应格式
 
-A response to a GraphQL operation must be a map.
+GraphQL的响应应该是映射集类型。
 
-If the operation included execution, the response map must contain a first entry
-with key `data`. The value of this entry is described in the "Data" section. If
-the operation failed before execution, due to a syntax error, missing
-information, or validation error, this entry must not be present.
+如果操作包含了执行，那其响应映射集的第一个条目的键必须是`data`，其值将在"Data/数据"一节中描述。如果操作在执行之前就失败，譬如语法错误、缺失信息或者验证错误，则此条目不应显示。
 
-If the operation encountered any errors, the response map must contain a next
-entry with key `errors`. The value of this entry is described in the "Errors"
-section. If the operation completed without encountering any errors, this entry
-must not be present.
+如果操作遇到了错误，则响应映射集的下一个条目的键必须是`errors`，其值将在"Errors/错误"一节中描述。如果操作并没遇到错误，则此条目不应显示。
 
-The response map may also contain an entry with key `extensions`. This entry,
-if set, must have a map as its value. This entry is reserved for implementors
-to extend the protocol however they see fit, and hence there are no additional
-restrictions on its contents.
+响应可以包含键为`extensions`的条目，此条目必须包含值。此条目是作为协议扩展而为实现者保留的，因此并没有对其内容的附加限制要求。
 
-To ensure future changes to the protocol do not break existing servers and
-clients, the top level response map must not contain any entries other than the
-three described above.
+为了保证本协议今后的变化不会破坏已有的服务器和客户端，顶层的响应映射集不能包含上述三个之外的条目。
 
 
-### Data
+### Data/数据
 
-The `data` entry in the response will be the result of the execution of the
-requested operation. If the operation was a query, this output will be an
-object of the schema's query root type; if the operation was a mutation, this
-output will be an object of the schema's mutation root type.
+响应中的`data`条目是请求的操作执行的结果。如果操作是query/查询，输出则是schema查询的根级类型对象，如果操作是mutation/更改，输出则是schema更改的根级类型对象。
 
-If an error was encountered before execution begins, the `data` entry should
-not be present in the result.
+如果在执行前遇到错误，结果中将不应有`data`条目。
 
-If an error was encountered during the execution that prevented a valid
-response, the `data` entry in the response should be `null`.
+如果在执行中遇到错误，并导致不能返回有效响应，则`data`条目应该为`null`。
 
 
-### Errors
+### Errors/错误
 
-The `errors` entry in the response is a non-empty list of errors, where each
-error is a map.
+响应中的`errors`是一个非空错误列表，每个错误是一个映射集。
 
-If no errors were encountered during the requested operation, the `errors`
-entry should not be present in the result.
+如果在执行请求的操作中未遇到错误，结果中将不应有`errors`条目。
 
-If the `data` entry in the response is not present, the `errors`
-entry in the response must not be empty. It must contain at least one error.
-The errors it contains should indicate why no data was able to be returned.
+如果响应结果中没有`data`条目，则响应中的`errors`条目不可为空，其必须包含至少一条错误，这个错误应指出为什么没有数据返回。
 
-If the `data` entry in the response is present (including if it is the value 
-{null}), the `errors` entry in the response may contain any errors that 
-occurred during execution. If errors occurred during execution, it should 
-contain those errors.
+如果响应中包含`data`条目（包含值为{null}的情况），那么响应中的`errors`条目可以包含执行期间的任何错误。如果执行期发生了错误，那这个错误就应该被包含。
 
-**Error result format**
+**Error result format/错误结果格式**
 
-Every error must contain an entry with the key `message` with a string
-description of the error intended for the developer as a guide to understand
-and correct the error.
+每个错误都必须包含键为`message`的条目，其包含了针对开发这错误描述，以便修正错误。
 
-If an error can be associated to a particular point in the requested GraphQL
-document, it should contain an entry with the key `locations` with a list of
-locations, where each location is a map with the keys `line` and `column`, both
-positive numbers starting from `1` which describe the beginning of an
-associated syntax element.
+如果一个错误能和请求的GraphQL文档特定点所匹配，它应该包含键为`locations`的条目，其内容为一个定位列表，每个定位都是键为`line`和`column`的映射集，两者都是从`1`开始的正数，用以描述相关的语法元素的起始位置。
 
-If an error can be associated to a particular field in the GraphQL result, it
-must contain an entry with the key `path` that details the path of the
-response field which experienced the error. This allows clients to identify
-whether a `null` result is intentional or caused by a runtime error.
+如果一个错误能和GraphQL结果中的特定字段关联，它必须包含键为`path`的条目，其描述了响应中哪一个字段面临了错误。这能让客户端鉴别一个`null`是正常逻辑还是运行时错误。
 
-This field should be a list of path segments starting at the root of the
-response and ending with the field associated with the error. Path segments
-that represent fields should be strings, and path segments that
-represent list indices should be 0-indexed integers. If the error happens
-in an aliased field, the path to the error should use the aliased name, since
-it represents a path in the response, not in the query.
+这个字段应该是一个路径段的列表，从响应根级开始直到关联的字段结束。用于表示字段的路径段应该是字符串类型，而表示列表索引的路径段则应该是从0开始的整数。如果错误发生在别名字段，那对应的路径应该使用别名，因为其表示的是响应中的路径而非查询中的。
 
-For example, if fetching one of the friends' names fails in the following
-query:
+例如，如果下列查询中，获取一个朋友的名字失败了：
 
 ```GraphQL
 {
@@ -173,7 +108,7 @@ query:
 }
 ```
 
-The response might look like:
+响应会像这样：
 
 ```json
 {
@@ -206,14 +141,9 @@ The response might look like:
 }
 ```
 
-If the field which experienced an error was declared as `Non-Null`, the `null`
-result will bubble up to the next nullable field. In that case, the `path`
-for the error should include the full path to the result field where the error
-occurred, even if that field is not present in the response.
+如果发生错误的字段声明为`Non-Null`非空，则`null`错误会冒泡到下一个可空字段，这种情况下，`path`也应该包含到发生错误的字段的完整路径，即便这个字段未出现在响应中。
 
-For example, if the `name` field from above had declared a `Non-Null` return
-type in the schema, the result would look different but the error reported would
-be the same:
+譬如，如果上述的`name`字段在schema中声明为`Non-Null`非空，那么查询结果可能不同，但是错误还是一样。
 
 ```json
 {
@@ -243,6 +173,4 @@ be the same:
 }
 ```
 
-GraphQL servers may provide additional entries to error as they choose to
-produce more helpful or machine-readable errors, however future versions of the
-spec may describe additional entries to errors.
+GraphQL服务器可以给error提供附加的条目，以用来展示更为用的或者机器可读的错误，当然，今后本规范也可能为error引入附加条目。
