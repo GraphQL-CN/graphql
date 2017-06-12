@@ -195,7 +195,7 @@ type Person {
 }
 ```
 
-对象的字段可能是标量、枚举型、其他对象类型、接口、或者联合。也可能是其它封装类型，其下层类型是这五个之一。
+对象的字段可能是标量、枚举型、其他对象类型、接口、或者联合。也可能是其它封装类型，其内部类型是这五个之一。
 
 例如：`Person`类型可能包含`relationship`：
 
@@ -629,78 +629,42 @@ Note: 输入值显式声明一个输入字段额度值为{null}和连输入字�
 
 ### Lists/列表型
 
-A GraphQL list is a special collection type which declares the type of each
-item in the List (referred to as the *item type* of the list). List values are
-serialized as ordered lists, where each item in the list is serialized as per
-the item type. To denote that a field uses a List type the item type is wrapped
-in square brackets like this: `pets: [Pet]`.
+GraphQL列表市一个特殊的集合类型，它声明了列表中元素的类型（下文指代为*元素类型*）。列表值的序列化结果是一个有序列表，列表中的元素根据元素类型序列化。一个字段使用了一个列表类型，其中封装了元素类型，其标注形式为：`pets: [Pet]`。
 
 **Result Coercion/结果类型转换**
 
-GraphQL servers must return an ordered list as the result of a list type. Each
-item in the list must be the result of a result coercion of the item type. If a
-reasonable coercion is not possible they must raise a field error. In
-particular, if a non-list is returned, the coercion should fail, as this
-indicates a mismatch in expectations between the type system and the
-implementation.
+GraphQL服务器必须返回有序列表作为一个列表类型的结果，列表中的每一个元素都是其元素类型的结果类型转换的结果，如果无法达成合理的类型转换，则抛出字段错误。其中，如果返回的是非列表类型，类型转换也会失败，这是要抛出一个类型系统和实现不匹配的异常。
 
 **Input Coercion/输入类型转换**
 
-When expected as an input, list values are accepted only when each item in the
-list can be accepted by the list's item type.
+当作为输入类型的时候，要求所有列表值都符合列表元素类型。
 
-If the value passed as an input to a list type is *not* a list and not the
-{null} value, it should be coerced as though the input was a list of size one,
-where the value passed is the only item in the list. This is to allow inputs
-that accept a "var args" to declare their input type as a list; if only one
-argument is passed (a common case), the client can just pass that value rather
-than constructing the list.
+如果作为输入类型传递给列表类型的值，既*不*是列表型也不是{null}空值，那么它将作为列表中的唯一元素作类型转换，这使输入能够在即便声明为"var args"类型参数数组，但只有一个参数被传入（常见场景），客户端可以直接传递值而不用封装成列表。
 
-Note that when a {null} value is provided via a runtime variable value for a
-list type, the value is interpreted as no list being provided, and not a list of
-size one with the value {null}.
+Note: 如果通过运行时变量传入给一个列表型的值是{null}，那么这个值会被解读为未传输任何列表，而不是一个长度为1的值为{null}的列表。
 
 
 ### Non-Null/非空型
 
-By default, all types in GraphQL are nullable; the {null} value is a valid
-response for all of the above types. To declare a type that disallows null,
-the GraphQL Non-Null type can be used. This type wraps an underlying type,
-and this type acts identically to that wrapped type, with the exception
-that {null} is not a valid response for the wrapping type. A trailing
-exclamation mark is used to denote a field that uses a Non-Null type like this:
-`name: String!`.
+默认情况下，GraphQL的所有类型都是可空的；{null}可作为上述所有类型的有效响应。如果要声明一个值不可为空，可以使用GraphQL的非空类型。这个类型封装一个内部类型，并表现为和被封装类型一样的行为，除了{null}不可作为其有效响应。非空类型使用一个感叹号跟着封装类型的方式来标注：`name: String!`。
 
-**Nullable vs. Optional**
+**Nullable vs. Optional/可空 vs 可选**
 
-Fields are *always* optional within the context of a query, a field may be
-omitted and the query is still valid. However fields that return Non-Null types
-will never return the value {null} if queried.
+查询上下文中的字段*总是*可选的，某个字段可以被省略而查询依然有效。然后，非空类型的字段绝不能对查询返回{null}。
 
-Inputs (such as field arguments), are always optional by default. However a
-non-null input type is required. In addition to not accepting the value {null},
-it also does not accept omission. For the sake of simplicity nullable types
-are always optional and non-null types are always required.
+输入（譬如字段参数）默认情况下总是可选的，然而如果一个参数是非空输入类型，那么它将不接受{null}也不能被省略。为了简明,(nullable)可空类型总是(optional)可选的，(non-null)非空类型总是(required)必须的。
 
 **Result Coercion/结果类型转换**
 
-In all of the above result coercions, {null} was considered a valid value.
-To coerce the result of a Non-Null type, the coercion of the wrapped type
-should be performed. If that result was not {null}, then the result of coercing
-the Non-Null type is that result. If that result was {null}, then a field error
-must be raised.
+上述所有结果类型转换中，{null}都被视为有效值，如果转换一个非空类型，那么会使用被封装类型的转换规则。如果非空类型的转换结果不为{null}空，那么就取这个结果。否则如果结果为{null}空，那么则抛出字段错误。
 
 **Input Coercion/输入类型转换**
 
-If an argument or input-object field of a Non-Null type is not provided, is
-provided with the literal value {null}, or is provided with a variable that was
-either not provided a value at runtime, or was provided the value {null}, then
-a query error must be raised.
+如果未提供非空类型的输入对象字段或者参数，则被认为是提供了字面量{null}，或者认为是提供了一个未赋值或者为{null}空值的运行时变量，然后抛出查询错误。
 
-If the value provided to the Non-Null type is provided with a literal value
-other than {null}, or a Non-Null variable value, it is coerced using the input coercion for the wrapped type.
+如果给非空类型提供的值是字面量而非{null}，或者一个非空变量值，则其会按照被封装类型的输入类型转换规则来转换。
 
-Example: A non-null argument cannot be omitted.
+案例：非空参数不可省略。
 
 ```!graphql
 {
@@ -708,7 +672,7 @@ Example: A non-null argument cannot be omitted.
 }
 ```
 
-Example: The value {null} cannot be provided to a non-null argument.
+案例：{null}空值不可作为非空参数的值。
 
 ```!graphql
 {
@@ -716,7 +680,7 @@ Example: The value {null} cannot be provided to a non-null argument.
 }
 ```
 
-Example: A variable of a nullable type cannot be provided to a non-null argument.
+案例：一个可空的变量不能作为非空参数的值。
 
 ```GraphQL
 query withNullableVariable($var: String) {
@@ -724,30 +688,25 @@ query withNullableVariable($var: String) {
 }
 ```
 
-Note: The Validation section defines providing a nullable variable type to
-a non-null input type as invalid.
+Note: 在验证一节的定义中，向可空类型提供非空的输入值是无效。
 
-**Non-Null type validation**
+**Non-Null type validation/非空类型验证**
 
-1. A Non-Null type must not wrap another Non-Null type.
+1. 一个非空类型不可封装另一个非空类型。
 
 
 ## Directives/指令
 
-A GraphQL schema includes a list of the directives the execution
-engine supports.
+一个GraphQL Schema包含了执行引擎支持的指令表。
 
-GraphQL implementations should provide the `@skip` and `@include` directives.
+GraphQL的实现需要提供`@skip`和`@include`指令。
 
 
 ### @skip
 
-The `@skip` directive may be provided for fields, fragment spreads, and
-inline fragments, and allows for conditional exclusion during execution as
-described by the if argument.
+`@skip`指令可用于字段、片段展开以及内联片段，从而能够在执行期间通过if参数完成条件性排除。
 
-In this example `experimentalField` will be queried only if the `$someTest` is
-provided a `false` value.
+下列案例中，`experimentalField`只有在`$someTest`为`false`的时候才会被查询。
 
 ```GraphQL
 query myQuery($someTest: Boolean) {
@@ -758,12 +717,9 @@ query myQuery($someTest: Boolean) {
 
 ### @include
 
-The `@include` directive may be provided for fields, fragment spreads, and
-inline fragments, and allows for conditional inclusion during execution as
-described by the if argument.
+`@include`指令可用于字段、片段展开以及内联片段，从而能够在执行期间通过if参数完成条件性包含。
 
-In this example `experimentalField` will be queried only if the `$someTest` is
-provided a `true` value.
+下列案例中，`experimentalField`只有在`$someTest`为`true`的时候才会被查询。
 
 ```GraphQL
 query myQuery($someTest: Boolean) {
@@ -771,28 +727,14 @@ query myQuery($someTest: Boolean) {
 }
 ```
 
-Note: Neither `@skip` nor `@include` has precedence over the other. In the case
-that both the `@skip` and `@include` directives are provided in on the same the
-field or fragment, it *must* be queried only if the `@skip` condition is false
-*and* the `@include` condition is true. Stated conversely, the field or fragment
-must *not* be queried if either the `@skip` condition is true *or* the
-`@include` condition is false.
+Note: `@skip`和`@include`没有优先级差别，当`@skip`和`@include`同时应用于一个字段时，*当且仅当*`@skip`为`false`，`@include`为`true`的时候它才会被查询。相反的，在*仅有*`@skip`为`true`或者*仅有*`@include`为`false`的时候它*不会*被查询。
 
 
 ## Initial types/初始类型
 
-A GraphQL schema includes types, indicating where query, mutation, and
-subscription operations start. This provides the initial entry points into the
-type system. The query type must always be provided, and is an Object
-base type. The mutation type is optional; if it is null, that means
-the system does not support mutations. If it is provided, it must
-be an object base type. Similarly, the subscription type is optional; if it is
-null, the system does not support subscriptions. If it is provided, it must be
-an object base type.
+一个GraphQL Schema包含了类型，表示query/查询、mutation/更改和subscription/订阅的起点，提供了进入类型系统的最初入口。其中query类型始终是必须的，并且是一个对象基础类型。mutation类型是可选的，如果其为空，那意味着此系统不支持mutation/更改，如果不为空，它必须是一个对象基础类型。同样的，subscription类型也是可选的，如果其为空，则此系统不支持subscription/订阅，如果不为空，它必须是一个对象基础类型。
 
-The fields on the query type indicate what fields are available at
-the top level of a GraphQL query. For example, a basic GraphQL query
-like this one:
+query类型的字段表示GraphQL查询中最顶层可用的字段。例如：一个基本的GraphQL查询可能像这样：
 
 ```GraphQL
 query getMe {
@@ -800,8 +742,7 @@ query getMe {
 }
 ```
 
-Is valid when the type provided for the query starting type has a field
-named "me". Similarly
+当query对应的类型含有一个名为"me"的字段时，这个查询就是有效的。类似的：
 
 ```GraphQL
 mutation setName {
@@ -811,8 +752,7 @@ mutation setName {
 }
 ```
 
-Is valid when the type provided for the mutation starting type is not null,
-and has a field named "setName" with a string argument named "name".
+当mutation对应的类型不为空，这个类型有一个名为"setName"参数为"name"的字段时，这个更改就是有效的。
 
 ```GraphQL
 subscription {
@@ -822,5 +762,4 @@ subscription {
 }
 ```
 
-Is valid when the type provided for the subscription starting type is not null,
-and has a field named "newMessage" and only contains a single root field. 
+当subscription对应的类型不为空，这个类型有一个名为"newMessage"的字段，且只有一个根字段时，这个订阅就是有效的。
