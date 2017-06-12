@@ -1,12 +1,10 @@
-# Introspection
+# Introspection/内省
 
-A GraphQL server supports introspection over its schema. This schema is queried
-using GraphQL itself, creating a powerful platform for tool-building.
+一个GraphQL服务器支持基于它的Schema来支持内省，这个Schema可以通过GraphQL自身来查询，创建了一个强大的工具构建平台。
 
-Take an example query for a trivial app. In this case there is a User type with
-three fields: id, name, and birthday.
+拿一个琐碎的app的样例查询举例。样例中有一个User类型，其中有字段：id，name和birthday。
 
-For example, given a server with the following type definition:
+例如，假设服务器有下列类型定义：
 
 ```GraphQL
 type User {
@@ -16,7 +14,7 @@ type User {
 }
 ```
 
-The query
+查询为
 
 ```GraphQL
 {
@@ -32,7 +30,7 @@ The query
 }
 ```
 
-would return
+会返回
 
 ```json
 {
@@ -57,67 +55,47 @@ would return
 ```
 
 
-## General Principles
+## General Principles/基本原则
 
 
-### Naming conventions
+### Naming conventions/命名约定
 
-Types and fields required by the GraphQL introspection system that are used in
-the same context as user-defined types and fields are prefixed with {"__"} two
-underscores. This in order to avoid naming collisions with user-defined GraphQL
-types. Conversely, GraphQL type system authors must not define any types,
-fields, arguments, or any other type system artifact with two leading
-underscores.
+GraphQL内省系统要求的类型和字段与用户定义的类型和系统共享相同的上下文，其字段名以{"__"}双下划线开头，以避免和用户定义的GraphQL类型命名冲突。相反地，GraphQL类型系统作者不能定义任何以双下划线开头的类型、字段、参数和其他类型系统工件。<small>artifact的翻译不确定</small>
 
 
-### Documentation
+### Documentation/文档
 
-All types in the introspection system provide a `description` field of type
-`String` to allow type designers to publish documentation in addition to
-capabilities. A GraphQL server may return the `description` field using Markdown
-syntax (as specified by [CommonMark](http://commonmark.org/)). Therefore it is
-recommended that any tool that displays `description` use a CommonMark-compliant
-Markdown renderer.
+所有内省系统中的类型必须提供`String`类型的`description`字段，以便类型设计者发布文档以增强能力。GraphQL服务可以返回使用Markdown语法（[CommonMark](http://commonmark.org/)中指定）的`description`字段。因此建议所有展示`description`字段的工具使用CommonMark兼容的Markdown渲染器。
 
 
-### Deprecation
+### Deprecation/弃用
 
-To support the management of backwards compatibility, GraphQL fields and enum
-values can indicate whether or not they are deprecated (`isDeprecated: Boolean`)
-and a description of why it is deprecated (`deprecationReason: String`).
+为了支持向后兼容管理，GraphQL字段和枚举值可以指出其是否弃用(`isDeprecated: Boolean`)和一个为何弃用的描述(`deprecationReason: String`)。
 
-Tools built using GraphQL introspection should respect deprecation by
-discouraging deprecated use through information hiding or developer-facing
-warnings.
+基于GraphQL内省系统建造的工具应该通过隐含信息或者面向开发者的警告信息来减少弃用字段的使用。
 
 
-### Type Name Introspection
+### Type Name Introspection/类型命名内省
 
-GraphQL supports type name introspection at any point within a query by the
-meta field `__typename: String!` when querying against any Object, Interface,
-or Union. It returns the name of the object type currently being queried.
+GraphQL支持类型命名自行，查询任意对象/接口/联合时可以在一个查询语句的任意位置通过元字段`__typename: String!`，得到当前查询的对象类型。
 
-This is most often used when querying against Interface or Union types to
-identify which actual type of the possible types has been returned.
+这在查询接口或者联合类型的真实类型的时候用得最为频繁。
 
-This field is implicit and does not appear in the fields list in any defined type.
+这是个隐式字段，并不会出现在定义的类型的字段列表中。
 
 
-## Schema Introspection
+## Schema Introspection/Schema内省
 
-The schema introspection system is accessible from the meta-fields `__schema`
-and `__type` which are accessible from the type of the root of a query
-operation.
+Schema的内省系统可通过查询操作的根级类型上的元字段`__schema`和`__type`来接入。
 
 ```
 __schema: __Schema!
 __type(name: String!): __Type
 ```
 
-These fields are implicit and do not appear in the fields list in the root type
-of the query operation.
+这两个字段也是隐式的，不会出现在查询操作根节点类型的字段列表中。
 
-The schema of the GraphQL schema introspection system:
+GraphQL Schema内省系统的Schema：
 
 ```GraphQL
 type __Schema {
@@ -205,112 +183,92 @@ enum __DirectiveLocation {
 ```
 
 
-### The __Type Type
+### The __Type Type/__Type类型
 
-`__Type` is at the core of the type introspection system.
-It represents scalars, interfaces, object types, unions, enums in the system.
+`__Type`是这个类型内省系统的核心，它代表了这个系统中的标量、接口、对象类型、联合、枚举型。
 
-`__Type` also represents type modifiers, which are used to modify a type
-that it refers to (`ofType: __Type`). This is how we represent lists,
-non-nullable types, and the combinations thereof.
+`__Type`也表示类型修改器，其通常用于表示修改一个类型(`ofType: __Type`)，这正是我们如何表示列表类型和非空类型，以及他们的组合类型。
 
 
-### Type Kinds
+### Type Kinds/类型种类
 
-There are several different kinds of type. In each kind, different fields are
-actually valid. These kinds are listed in the `__TypeKind` enumeration.
-
-
-#### Scalar
-
-Represents scalar types such as Int, String, and Boolean. Scalars cannot have fields.
-
-A GraphQL type designer should describe the data format and scalar coercion
-rules in the description field of any scalar.
-
-Fields
-
-* `kind` must return `__TypeKind.SCALAR`.
-* `name` must return a String.
-* `description` may return a String or {null}.
-* All other fields must return {null}.
+类型系统中存在多个种类的类型，每种类型都有不同的有效字段，这些类型都被列举在`__TypeKind`枚举值中。
 
 
-#### Object
+#### Scalar/标量
 
-Object types represent concrete instantiations of sets of fields. The
-introspection types (e.g. `__Type`, `__Field`, etc) are examples of objects.
+标量中譬如整数型、字符串型、布尔型都不能拥有字段。
 
-Fields
+GraphQL类型设计者需要描述标量的`description`字段描述数据格式以及标量的类型转换规则。
 
-* `kind` must return `__TypeKind.OBJECT`.
-* `name` must return a String.
-* `description` may return a String or {null}.
-* `fields`: The set of fields query-able on this type.
-  * Accepts the argument `includeDeprecated` which defaults to {false}. If
-    {true}, deprecated fields are also returned.
-* `interfaces`: The set of interfaces that an object implements.
-* All other fields must return {null}.
+字段
+
+* `kind`必须返回`__TypeKind.SCALAR`。
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* 其他字段必须返回{null}空值。
 
 
-#### Union
+#### Object/对象
 
-Unions are an abstract type where no common fields are declared. The possible
-types of a union are explicitly listed out in `possibleTypes`. Types can be
-made parts of unions without modification of that type.
+对象类型表示一系列字段的具体实例，内省类型（譬如`__Type`,`__Field`等）亦是典型的对象类型。
 
-Fields
+字段
 
-* `kind` must return `__TypeKind.UNION`.
-* `name` must return a String.
-* `description` may return a String or {null}.
-* `possibleTypes` returns the list of types that can be represented within this
-  union. They must be object types.
-* All other fields must return {null}.
-
-
-#### Interface
-
-Interfaces are an abstract type where there are common fields declared. Any type
-that implements an interface must define all the fields with names and types
-exactly matching. The implementations of this interface are explicitly listed
-out in `possibleTypes`.
-
-Fields
-
-* `kind` must return `__TypeKind.INTERFACE`.
-* `name` must return a String.
-* `description` may return a String or {null}.
-* `fields`: The set of fields required by this interface.
-  * Accepts the argument `includeDeprecated` which defaults to {false}. If
-    {true}, deprecated fields are also returned.
-* `possibleTypes` returns the list of types that implement this interface.
-  They must be object types.
-* All other fields must return {null}.
+* `kind`必须返回`__TypeKind.OBJECT`。
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `fields`：本类型上可被查询的字段的集合。
+  * 接受参数`includeDeprecated`，默认为{false}。如过为{true}则弃用的字段也将返回。
+* `interfaces`：对象实现的接口的集合。
+* 其他字段必须返回{null}空值。
 
 
-#### Enum
+#### Union/联合
 
-Enums are special scalars that can only have a defined set of values.
+联合是一个抽象类型，其不声明任何字段。联合的可能类型要显式的在`possibleTypes`中列出。类型可不加修改的直接作为联合的一部分。
 
-Fields
+字段
 
-* `kind` must return `__TypeKind.ENUM`.
-* `name` must return a String.
-* `description` may return a String or {null}.
-* `enumValues`: The list of `EnumValue`. There must be at least one and they
-  must have unique names.
-  * Accepts the argument `includeDeprecated` which defaults to {false}. If
-    {true}, deprecated enum values are also returned.
-* All other fields must return {null}.
+* `kind`必须返回`__TypeKind.UNION`。
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `possibleTypes`必须返回联合内可能的类型的列表，它们都必须是对象类型。
+* 其他字段必须返回{null}空值。
 
 
-#### Input Object
+#### Interface/接口
 
-Input objects are composite types used as inputs into queries defined as a list
-of named input values.
+接口是一个抽象类型，其声明了通用字段。所有实现接口的对象必须定义完全匹配的名字和类型的字段。实现了此接口的类型都有在`possibleTypes`中列出。
 
-For example the input object `Point` could be defined as:
+字段
+
+* `__TypeKind.INTERFACE`。
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `fields`: 接口要求的字段的集合。
+* `possibleTypes`返回实现了此接口的类型，它们都必须是对象类型。
+* 其他字段必须返回{null}空值。
+
+
+#### Enum/枚举型
+
+枚举型是特殊的标量，他只能拥有有限集合的标量。
+
+字段
+
+* `kind`必须返回`__TypeKind.ENUM`。
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `enumValues`：`EnumValue`的列表。必须至少有一个值，并且必须有不同的名字。
+  * 接受参数`includeDeprecated`，默认为{false}。如过为{true}则弃用的字段也将返回。
+
+
+#### Input Object/输入对象
+
+输入对象是复合类型，通常以具名输入值列表的形式作为查询的输入。
+
+例如输入对象`Point`可以定义成：
 
 ```GraphQL
 input Point {
@@ -319,110 +277,92 @@ input Point {
 }
 ```
 
-Fields
+字段
 
-* `kind` must return `__TypeKind.INPUT_OBJECT`.
-* `name` must return a String.
-* `description` may return a String or {null}.
-* `inputFields`: a list of `InputValue`.
-* All other fields must return {null}.
-
-
-#### List
-
-Lists represent sequences of values in GraphQL. A List type is a type modifier:
-it wraps another type instance in the `ofType` field, which defines the type of
-each item in the list.
-
-Fields
-
-* `kind` must return `__TypeKind.LIST`.
-* `ofType`: Any type.
-* All other fields must return {null}.
+* `kind`必须返回`__TypeKind.INPUT_OBJECT`。
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `inputFields`：`InputValue`的列表。
 
 
-#### Non-Null
+#### List/列表
 
-GraphQL types are nullable. The value {null} is a valid response for field type.
+列表表示一系列GraphQL值。列表类型是类型修改器：它在`ofType`中封装了另一个类型的实例，其定义了列表中的每个元素。
 
-A Non-null type is a type modifier: it wraps another type instance in the
-`ofType` field. Non-null types do not allow {null} as a response, and indicate
-required inputs for arguments and input object fields.
+字段
 
-* `kind` must return `__TypeKind.NON_NULL`.
-* `ofType`: Any type except Non-null.
-* All other fields must return {null}.
+* `kind`必须返回`__TypeKind.LIST`。
+* `ofType`：任意类型。
+* 其他字段必须返回{null}空值。
 
 
-#### Combining List and Non-Null
+#### Non-Null/非空
 
-List and Non-Null can compose, representing more complex types.
+GraphQL类型都是可空的，{null}值是有效的字段类型返回值。
 
-If the modified type of a List is Non-Null, then that List may not contain any
-{null} items.
+非空类型是类型修改器：它它在`ofType`中封装了另一个类型的实例。非空类型不允许{null}作为返回，也用于表示必要输入参数和必要输入对象字段。
 
-If the modified type of a Non-Null is List, then {null} is not accepted,
-however an empty list is accepted.
-
-If the modified type of a List is a List, then each item in the first List is
-another List of the second List's type.
-
-A Non-Null type cannot modify another Non-Null type.
+* `kind`必须返回`__TypeKind.NON_NULL`。
+* `ofType`：除了Non-null外的所有类型。
+* 其他字段必须返回{null}空值。
 
 
-### The __Field Type
+#### Combining List and Non-Null/列表和非空的组合
 
-The `__Field` type represents each field in an Object or Interface type.
+列表和非空可以通过组合以表示更为复杂的类型。
 
-Fields
+如果列表修改的类型是非空，那么列表不能包含任何{null}空值元素。
 
-* `name` must return a String
-* `description` may return a String or {null}
-* `args` returns a List of `__InputValue` representing the arguments this
-  field accepts.
-* `type` must return a `__Type` that represents the type of value returned by
-  this field.
-* `isDeprecated` returns {true} if this field should no longer be used,
-  otherwise {false}.
-* `deprecationReason` optionally provides a reason why this field is deprecated.
+如果非空修改的类型是列表，那么不能接受{null}空值，但是空数组可接受。
+
+如果列表修改的类型是列表，那么第一个列表的元素是第二个列表类型的列表。
+
+非空类型不能修改另一个非空类型。
 
 
-### The __InputValue Type
+### The __Field Type/__Field类型
 
-The `__InputValue` type represents field and directive arguments as well as the
-`inputFields` of an input object.
+`__Field`类型表示对象或者接口类型的每一个字段。
 
-Fields
+字段
 
-* `name` must return a String
-* `description` may return a String or {null}
-* `type` must return a `__Type` that represents the type this input
-  value expects.
-* `defaultValue` may return a String encoding (using the GraphQL language) of the
-  default value used by this input value in the condition a value is not
-  provided at runtime. If this input value has no default value, returns {null}.
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `args`返回`__InputValue`的列表，表示这个字段接受的参数。
+* `type`必须返回`__Type`，表示这个字段值的类型。
+* `isDeprecated`返回{true}如果这个字段不应再被使用，否则{false}。
+* `deprecationReason`可选，提供字段被弃用的原因。
 
-### The __EnumValue Type
 
-The `__EnumValue` type represents one of possible values of an enum.
+### The __InputValue Type/__InputValue类型
 
-Fields
+`__InputValue`类型表示字段和指令的参数，如同输入对象的`inputFields`字段。
 
-* `name` must return a String
-* `description` may return a String or {null}
-* `isDeprecated` returns {true} if this field should no longer be used,
-  otherwise {false}.
-* `deprecationReason` optionally provides a reason why this field is deprecated.
+字段
 
-### The __Directive Type
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `type`必须返回表示这个输入值期待的类型的`__Type`。
+* `defaultValue`返回一个（使用GraphQL语言）字符串，表示这个输入值在运行时未提供值的情况下的默认值，如果这个输入值没有默认值，返回{null}空值。
 
-The `__Directive` type represents a Directive that a server supports.
+### The __EnumValue Type/__EnumValue类型
 
-Fields
+`__EnumValue`表示枚举型的可能值之一。
 
-* `name` must return a String
-* `description` may return a String or {null}
-* `locations` returns a List of `__DirectiveLocation` representing the valid
-  locations this directive may be placed.
-* `args` returns a List of `__InputValue` representing the arguments this
-  directive accepts.
+字段
+
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `isDeprecated`返回{true}如果这个字段不应再被使用，否则{false}。
+* `deprecationReason`可选，提供字段被弃用的原因。
+
+### The __Directive Type/__Directive类型
+
+`__Directive`类型表示服务器支持的一个指令。
+
+字段
+
+* `name`必须返回字符串。
+* `description`必须返回字符串或者{null}空值。
+* `locations`返回`__DirectiveLocation`列表，表示指令可以放置的有效位置。
+* `args`返回`__InputValue`的列表，表示这个字段接受的参数。
