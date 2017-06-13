@@ -1,4 +1,4 @@
-# A. Appendix: Notation Conventions
+# A. Appendix: Notation Conventions/A.附录：符号约定
 
 This specification document contains a number of notation conventions used to
 describe technical concepts such as language grammar and semantics as well as
@@ -8,7 +8,7 @@ This appendix seeks to explain these notations in greater detail to
 avoid ambiguity.
 
 
-## Context-Free Grammar
+## Context-Free Grammar/无上下文的语法
 
 A context-free grammar consists of a number of productions. Each production has
 an abstract symbol called a "non-terminal" as its left-hand side, and zero or
@@ -44,7 +44,7 @@ ListOfLetterA :
   - ListOfLetterA `a`
 
 
-## Lexical and Syntactical Grammar
+## Lexical and Syntactical Grammar/词句上的语法
 
 The GraphQL language is defined in a syntactic grammar where terminal symbols
 are tokens. Tokens are defined in a lexical grammar which matches patterns of
@@ -67,7 +67,7 @@ one colon `:` definition.
 Sentence : Noun Verb
 
 
-## Grammar Notation
+## Grammar Notation/语法符号
 
 This specification uses some additional notation to describe common patterns,
 such as optional or repeated patterns, or parameterized alterations of the
@@ -161,7 +161,7 @@ Example_param :
   - D
 
 
-## Grammar Semantics
+## Grammar Semantics/语法语义
 
 This specification describes the semantic value of many grammar productions in
 the form of a list of algorithmic steps.
@@ -178,7 +178,7 @@ StringValue :: `"` StringCharacter+ `"`
     Unicode character values.
 
 
-## Algorithms
+## Algorithms/算法
 
 This specification describes some algorithms used by the static and runtime semantics, they're defined in the form of a function-like syntax along with a
 list of algorithmic steps to take.

@@ -1,4 +1,4 @@
-# Validation
+# Validation/验证
 
 GraphQL does not just verify if a request is syntactically correct, but also
 ensures that it is unambiguous and mistake-free in the context of a given
@@ -35,7 +35,7 @@ be free of any validation errors, and have not changed since.
 For this section of this schema, we will assume the following type system
 in order to demonstrate examples:
 
-```
+```GraphQL
 enum DogCommand { SIT, DOWN, HEEL }
 
 type Dog implements Pet {
@@ -83,11 +83,11 @@ type QueryRoot {
 ```
 
 
-## Operations
+## Operations/操作
 
-### Named Operation Definitions
+### Named Operation Definitions/具名操作定义
 
-#### Operation Name Uniqueness
+#### Operation Name Uniqueness/操作名唯一性
 
 **Formal Specification**
 
@@ -154,9 +154,9 @@ mutation dogOperation {
 }
 ```
 
-### Anonymous Operation Definitions
+### Anonymous Operation Definitions/匿名操作定义
 
-#### Lone Anonymous Operation
+#### Lone Anonymous Operation/单独匿名操作
 
 **Formal Specification**
 
@@ -198,9 +198,9 @@ query getName {
 }
 ```
 
-### Subscription Operation Definitions
+### Subscription Operation Definitions/订阅操作定义
 
-#### Single root field
+#### Single root field/单个根级字段
 
 **Formal Specification**
 
@@ -260,9 +260,9 @@ subscription sub {
 }
 ```
 
-## Fields
+## Fields/字段
 
-### Field Selections on Objects, Interfaces, and Unions Types
+### Field Selections on Objects, Interfaces, and Unions Types/对象、接口和联合上的字段选择
 
 **Formal Specification**
 
@@ -336,7 +336,7 @@ fragment directFieldSelectionOnUnion on CatOrDog {
 ```
 
 
-### Field Selection Merging
+### Field Selection Merging/字段选择合并
 
 **Formal Specification**
 
@@ -491,7 +491,7 @@ fragment conflictingDifferingResponses on Pet {
 ```
 
 
-### Leaf Field Selections
+### Leaf Field Selections/叶子节点选择
 
 **Formal Specification**
 
@@ -556,13 +556,13 @@ query directQueryOnUnionWithoutSubFields {
 ```
 
 
-## Arguments
+## Arguments/参数
 
 Arguments are provided to both fields and directives. The following validation
 rules apply in both cases.
 
 
-### Argument Names
+### Argument Names/参数名
 
 **Formal Specification**
 
@@ -635,7 +635,7 @@ fragment multipleArgsReverseOrder on Arguments {
 ```
 
 
-### Argument Uniqueness
+### Argument Uniqueness/参数唯一性
 
 Fields and directives treat arguments as a mapping of argument name to value.
 More than one argument with the same name in an argument set is ambiguous
@@ -649,9 +649,9 @@ and invalid.
   * {arguments} must be the set containing only {argument}.
 
 
-### Argument Values Type Correctness
+### Argument Values Type Correctness/参数值类型正确性
 
-#### Compatible Values
+#### Compatible Values/兼容值
 
 **Formal Specification**
 
@@ -690,7 +690,7 @@ fragment stringIntoInt on Arguments {
 ```
 
 
-#### Required Non-Null Arguments
+#### Required Non-Null Arguments/必要非空参数
 
   * For each Field or Directive in the document.
   * Let {arguments} be the arguments provided by the Field or Directive.
@@ -748,11 +748,11 @@ fragment missingRequiredArg on Arguments {
 }
 ```
 
-## Fragments
+## Fragments/片段
 
-### Fragment Declarations
+### Fragment Declarations/片段声明
 
-#### Fragment Name Uniqueness
+#### Fragment Name Uniqueness/片段名唯一性
 
 **Formal Specification**
 
@@ -811,7 +811,7 @@ fragment fragmentOne on Dog {
 ```
 
 
-#### Fragment Spread Type Existence
+#### Fragment Spread Type Existence/片段结构类型存在性
 
 **Formal Specification**
 
@@ -860,7 +860,7 @@ fragment inlineNotExistingType on Dog {
 ```
 
 
-#### Fragments On Composite Types
+#### Fragments On Composite Types/组合类型上的片段
 
 **Formal Specification**
 
@@ -907,7 +907,7 @@ fragment inlineFragOnScalar on Dog {
 ```
 
 
-#### Fragments Must Be Used
+#### Fragments Must Be Used/必须使用的片段
 
 **Formal Specification**
 
@@ -933,7 +933,7 @@ fragment nameFragment on Dog { # unused
 ```
 
 
-### Fragment Spreads
+### Fragment Spreads/片段解构
 
 Field selection is also determined by spreading fragments into one
 another. The selection set of the target fragment is unioned with
@@ -941,7 +941,7 @@ the selection set at the level at which the target fragment is
 referenced.
 
 
-#### Fragment spread target defined
+#### Fragment spread target defined/片段解构目标必须预先定义
 
 **Formal Specification**
 
@@ -964,7 +964,7 @@ not defined, this is an error:
 ```
 
 
-#### Fragment spreads must not form cycles
+#### Fragment spreads must not form cycles/片段解构不可造成循环
 
 **Formal Specification**
 
@@ -1049,7 +1049,7 @@ fragment ownerFragment on Dog {
 ```
 
 
-#### Fragment spread is possible
+#### Fragment spread is possible/片段结构必须可行
 
 **Formal Specification**
 
@@ -1075,7 +1075,7 @@ is only valid if its type condition could ever apply within
 the parent type.
 
 
-##### Object Spreads In Object Scope
+##### Object Spreads In Object Scope/对象范围内的对象解构
 
 In the scope of an object type, the only valid object type
 fragment spread is one that applies to the same type that
@@ -1102,7 +1102,7 @@ fragment catInDogFragmentInvalid on Dog {
 ```
 
 
-##### Abstract Spreads in Object Scope
+##### Abstract Spreads in Object Scope/对象范围内的抽象解构
 
 In scope of an object type, unions or interface spreads can be used
 if the object type implements the interface or is a member of the union.
@@ -1142,7 +1142,7 @@ we do not specify this as invalid because we only consider the fragment
 declaration, not its body.
 
 
-##### Object Spreads In Abstract Scope
+##### Object Spreads In Abstract Scope/抽象范围内的对象解构
 
 Union or interface spreads can be used within the context of an object type
 fragment, but only if the object type is one of the possible types of
@@ -1191,7 +1191,7 @@ is invalid. Likewise {Cat} is not a member of the union {HumanOrAlien}, and it
 can also never return meaningful results, making it invalid.
 
 
-##### Abstract Spreads in Abstract Scope
+##### Abstract Spreads in Abstract Scope/抽象范围内的抽象解构
 
 Union or interfaces fragments can be used within each other. As long as there
 exists at least *one* object type that exists in the intersection of the
@@ -1230,10 +1230,10 @@ is not valid because there exists no type that implements both {Pet}
 and {Sentient}.
 
 
-## Values
+## Values/值
 
 
-### Input Object Field Uniqueness
+### Input Object Field Uniqueness/输入对象字段唯一性
 
 **Formal Specification**
 
@@ -1257,10 +1257,10 @@ For example the following query will not pass validation.
 ```
 
 
-## Directives
+## Directives/指令
 
 
-### Directives Are Defined
+### Directives Are Defined/指令必须预先定义
 
 **Formal Specification**
 
@@ -1275,7 +1275,7 @@ GraphQL servers define what directives they support. For each
 usage of a directive, the directive must be available on that server.
 
 
-### Directives Are In Valid Locations
+### Directives Are In Valid Locations/指令必须在有效位置
 
 **Formal Specification**
 
@@ -1302,7 +1302,7 @@ query @skip(if: $foo) {
 ```
 
 
-### Directives Are Unique Per Location
+### Directives Are Unique Per Location/每个位置的指令都必须唯一
 
 **Formal Specification**
 
@@ -1345,9 +1345,9 @@ query ($foo: Boolean = true, $bar: Boolean = false) {
 ```
 
 
-## Variables
+## Variables/变量
 
-### Variable Uniqueness
+### Variable Uniqueness/变量唯一性
 
 **Formal Specification**
 
@@ -1393,7 +1393,7 @@ fragment HouseTrainedFragment {
 ```
 
 
-### Variable Default Values Are Correctly Typed
+### Variable Default Values Are Correctly Typed/变量默认值必须是正确的类型
 
 **Formal Specification**
 
@@ -1457,7 +1457,7 @@ query intToFloatQuery($floatVar: Float = 1) {
 ```
 
 
-### Variables Are Input Types
+### Variables Are Input Types/变量必须是输入类型
 
 **Formal Specification**
 
@@ -1526,7 +1526,7 @@ query takesCatOrDog($catOrDog: CatOrDog) {
 ```
 
 
-### All Variable Uses Defined
+### All Variable Uses Defined/所有变量的使用必须预先定义
 
 **Formal Specification**
 
@@ -1669,7 +1669,7 @@ a variable ${atOtherHomes} but that variable is used by {isHousetrainedFragment}
 which is included in that operation.
 
 
-### All Variables Used
+### All Variables Used/所有变量都必须被使用
 
 **Formal Specification**
 
@@ -1752,7 +1752,7 @@ This document is not valid because {queryWithExtraVar} defines
 an extraneous variable.
 
 
-### All Variable Usages are Allowed
+### All Variable Usages are Allowed/所有变量都允许使用
 
 **Formal Specification**
 

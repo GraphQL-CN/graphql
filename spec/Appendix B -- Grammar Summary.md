@@ -1,9 +1,9 @@
-# B. Appendix: Grammar Summary
+# B. Appendix: Grammar Summary/A.附录：语法总结
 
 SourceCharacter :: /[\u0009\u000A\u000D\u0020-\uFFFF]/
 
 
-## Ignored Tokens
+## Ignored Tokens/忽略符号
 
 Ignored ::
   - UnicodeBOM
@@ -30,7 +30,7 @@ CommentChar :: SourceCharacter but not LineTerminator
 Comma :: ,
 
 
-## Lexical Tokens
+## Lexical Tokens/词法符号
 
 Token ::
   - Punctuator
@@ -82,7 +82,7 @@ EscapedUnicode :: /[0-9A-Fa-f]{4}/
 EscapedCharacter :: one of `"` \ `/` b f n r t
 
 
-## Query Document
+## Query Document/查询文档
 
 Document : Definition+
 

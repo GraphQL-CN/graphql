@@ -1,4 +1,4 @@
-# Execution
+# Execution/执行
 
 GraphQL generates a response from a request via execution.
 
@@ -17,7 +17,7 @@ Given this information, the result of {ExecuteRequest()} produces the response,
 to be formatted according to the Response section below.
 
 
-## Executing Requests
+## Executing Requests/执行请求
 
 To execute a request, the executor must have a parsed `Document` (as defined
 in the “Query Language” part of this spec) and a selected operation name to
@@ -49,7 +49,7 @@ GetOperation(document, operationName):
     * Return {operation}.
 
 
-### Validating Requests
+### Validating Requests/验证请求
 
 As explained in the Validation section, only requests which pass all validation
 rules should be executed. If validation errors are known, they should be
@@ -68,7 +68,7 @@ not later change, or a service may validate a request once and memoize the
 result to avoid validating the same request again in the future.
 
 
-### Coercing Variable Values
+### Coercing Variable Values/转换变量值
 
 If the operation has defined any variables, then the values for
 those variables need to be coerced using the input coercion rules
@@ -102,13 +102,13 @@ CoerceVariableValues(schema, operation, variableValues):
 Note: This algorithm is very similar to {CoerceArgumentValues()}.
 
 
-## Executing Operations
+## Executing Operations/执行操作
 
 The type system, as described in the “Type System” section of the spec, must
 provide a query root object type. If mutations or subscriptions are supported,
 it must also provide a mutation or subscription root object type, respectively.
 
-### Query
+### Query/查询
 
 If the operation is a query, the result of the operation is the result of
 executing the query’s top level selection set with the query root object type.
@@ -127,7 +127,7 @@ ExecuteQuery(query, schema, variableValues, initialValue):
     selection set.
   * Return an unordered map containing {data} and {errors}.
 
-### Mutation
+### Mutation/更改
 
 If the operation is a mutation, the result of the operation is the result of
 executing the mutation’s top level selection set on the mutation root
@@ -149,7 +149,7 @@ ExecuteMutation(mutation, schema, variableValues, initialValue):
     selection set.
   * Return an unordered map containing {data} and {errors}.
 
-### Subscription
+### Subscription/订阅
 
 If the operation is a subscription, the result is an event stream called the
 "Response Stream" where each event in the event stream is the result of
@@ -223,7 +223,7 @@ single machine in a service. Durability and availability may be improved by
 having separate dedicated services for managing subscription state and client
 connectivity.
 
-#### Source Stream
+#### Source Stream/源流
 
 A Source Stream represents the sequence of events, each of which will
 trigger a GraphQL execution corresponding to that event. Like field value
@@ -248,7 +248,7 @@ Note: This {ResolveFieldEventStream()} algorithm is intentionally similar
 to {ResolveFieldValue()} to enable consistency when defining resolvers
 on any operation type.
 
-#### Response Stream
+#### Response Stream/响应流
 
 Each event in the underlying Source Stream triggers execution of the subscription
 selection set using that event as a root value.
@@ -277,7 +277,7 @@ ExecuteSubscriptionEvent(subscription, schema, variableValues, initialValue):
 Note: The {ExecuteSubscriptionEvent()} algorithm is intentionally similar to
 {ExecuteQuery()} since this is how the each event result is produced.
 
-#### Unsubscribe
+#### Unsubscribe/退订
 
 Unsubscribe cancels the Response Stream when a client no longer wishes to receive
 payloads for a subscription. This may in turn also cancel the Source Stream.
@@ -288,7 +288,7 @@ Unsubscribe(responseStream)
 
   * Cancel {responseStream}
 
-## Executing Selection Sets
+## Executing Selection Sets/执行选择集
 
 To execute a selection set, the object value being evaluated and the object type
 need to be known, as well as whether it must be executed serially, or may be
@@ -317,7 +317,7 @@ Note: {resultMap} is ordered by which fields appear first in the query. This
 is explained in greater detail in the Field Collection section below.
 
 
-### Normal and Serial Execution
+### Normal and Serial Execution/正常序列执行
 
 Normally the executor can execute the entries in a grouped field set in whatever
 order it chooses (often in parallel). Because the resolution of fields other
@@ -414,7 +414,7 @@ A correct executor must generate the following result for that selection set:
 ```
 
 
-### Field Collection
+### Field Collection/字段集合
 
 Before execution, the selection set is converted to a grouped field set by
 calling {CollectFields()}. Each entry in the grouped field set is a list of
@@ -504,7 +504,7 @@ DoesFragmentTypeApply(objectType, fragmentType):
     * if {objectType} is a possible type of {fragmentType}, return {true} otherwise return {false}.
 
 
-## Executing Fields
+## Executing Fields/执行字段
 
 Each field requested in the grouped field set that is defined on the selected
 objectType will result in an entry in the response map. Field execution first
@@ -519,7 +519,7 @@ ExecuteField(objectType, objectValue, fieldType, fields, variableValues):
   * Return the result of {CompleteValue(fieldType, fields, resolvedValue, variableValues)}.
 
 
-### Coercing Field Arguments
+### Coercing Field Arguments/转换字段参数
 
 Fields may include arguments which are provided to the underlying runtime in
 order to correctly produce a value. These arguments are defined by the field in
@@ -570,7 +570,7 @@ before executing the operation in {CoerceVariableValues()}, and valid queries
 must only allow usage of variables of appropriate types.
 
 
-### Value Resolution
+### Value Resolution/值解析
 
 While nearly all of GraphQL execution can be described generically, ultimately
 the internal system exposing the GraphQL interface must provide values.
@@ -592,7 +592,7 @@ necessitates the rest of a GraphQL executor to handle an asynchronous
 execution flow.
 
 
-### Value Completion
+### Value Completion/值完成
 
 After resolving the value for a field, it is completed by ensuring it adheres
 to the expected return type. If the return type is another Object type, then
@@ -672,7 +672,7 @@ MergeSelectionSets(fields):
   * Return {selectionSet}.
 
 
-### Errors and Non-Nullability
+### Errors and Non-Nullability/错误与非空
 
 If an error is thrown while resolving a field, it should be treated as though
 the field returned {null}, and an error must be added to the {"errors"} list
