@@ -14,7 +14,7 @@ before execution, however a GraphQL service may execute a request without
 explicitly validating it if that exact same request is known to have been
 validated before. For example: the request may be validated during development,
 provided it does not later change, or a service may validate a request once and
-memoize the result to avoid validating the same request again in the future.
+memorize the result to avoid validating the same request again in the future.
 Any client-side or development-time tool should report validation errors and not
 allow the formulation or execution of requests known to be invalid at that given
 point in time.

@@ -1,39 +1,18 @@
 # Validation/验证
 
-GraphQL does not just verify if a request is syntactically correct, but also
-ensures that it is unambiguous and mistake-free in the context of a given
-GraphQL schema.
+GraphQL不仅会检测一个请求是否句法上正确，还会其在给定GraphQL schema上下文内无歧义无错误。
 
-An invalid request is still technically executable, and will always produce a
-stable result as defined by the procedures in the Execution section, however
-that result may be ambiguous, surprising, or unexpected relative to the request
-containing validation errors, so execution should not occur for invalid requests.
+一个无效请求依然是技术上可执行的，也能通过执行章节的步骤产生稳定的结果，但是相对于这个有验证错误的请求，其结果可能是有歧义的、意外不可预知的，所以对于无效请求，不应该予以执行。
 
-Typically validation is performed in the context of a request immediately
-before execution, however a GraphQL service may execute a request without
-explicitly validating it if that exact same request is known to have been
-validated before. For example: the request may be validated during development,
-provided it does not later change, or a service may validate a request once and
-memoize the result to avoid validating the same request again in the future.
-Any client-side or development-time tool should report validation errors and not
-allow the formulation or execution of requests known to be invalid at that given
-point in time.
+典型的验证会在请求执行前的上下文中执行，但是如果给定请求之前已经通过验证，那么GraphQL服务在执行这个请求前可能不会显式的验证它，譬如一个请求在开发期已经通过验证，并假设他后面不会改变，或者服务器层验证了一个请求，记住了它的验证结果以避免后续再次验证同样的请求。因此任何客户端或者开发期工具，都应该汇报验证错误，并阻止构建或者执行当时已知错误的请求。
 
-**Type system evolution**
+**Type system evolution/类型系统演变**
 
-As GraphQL type system schema evolve over time by adding new types and new
-fields, it is possible that a request which was previously valid could later
-become invalid. Any change that can cause a previously valid request to become
-invalid is considered a *breaking change*. GraphQL services and schema
-maintainers are encouraged to avoid breaking changes, however in order to be
-more resilient to these breaking changes, sophisticated GraphQL systems may
-still allow for the execution of requests which *at some point* were known to
-be free of any validation errors, and have not changed since.
+GraphQL类型系统可能会随着时间添加一些类型和字段，从而发生了演变，之前有效的请求之后可能就变得无效。任何让之前有效的请求变得无效的变化都称之为*破坏性变化*。GraphQL服务和schema维护者被鼓励要避免破坏性变化，但是为了保证面对破坏性变化的弹性，复杂的GraphQL系统可能依然允许执行*在某个点上*没有错误也未曾改变的请求。
 
-**Examples**
+**Examples/案例**
 
-For this section of this schema, we will assume the following type system
-in order to demonstrate examples:
+至于本章节的schema，我们假定有如下类型系统用于描述案例：
 
 ```GraphQL
 enum DogCommand { SIT, DOWN, HEEL }

@@ -4,7 +4,7 @@ GraphQL的类型系统用于描述服务器的能力以及判断一个查询是�
 
 GraphQL服务器的能力是同schema来描述，schema使用其支持的类型和指令来定义。
 
-一个给定GraphQL schema其自身首先必须要通过内部有效性验证，本节将会讲述这个验证过程的相关规则。
+一个给定GraphQL schema其自身首先必须要通过内部有效性验证，本章节将会讲述这个验证过程的相关规则。
 
 一个GraphQL schema使用每种操作的根级类型表示：query/查询、mutation/更改和subscription/订阅，这表示schema是这三种操作开始的地方。
 
@@ -326,7 +326,7 @@ fragment Matching on Query {
 
 **Result Coercion/结果类型转换**
 
-对象类型的结果类型转换判定机制是GraphQL执行器的核心，因此将在本规范的执行器那一节覆盖这个内容。
+对象类型的结果类型转换判定机制是GraphQL执行器的核心，因此将在本规范的执行器那一章节覆盖这个内容。
 
 **Input Coercion/输入类型转换**
 
@@ -688,7 +688,7 @@ query withNullableVariable($var: String) {
 }
 ```
 
-Note: 在验证一节的定义中，向可空类型提供非空的输入值是无效。
+Note: 在验证章节的定义中，向可空类型提供非空的输入值是无效。
 
 **Non-Null type validation/非空类型验证**
 
