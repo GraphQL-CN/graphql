@@ -68,20 +68,19 @@ type QueryRoot {
 
 #### Operation Name Uniqueness/操作名唯一性
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each operation definition {operation} in the document
-  * Let {operationName} be the name of {operation}.
-  * If {operationName} exists
-    * Let {operations} be all operation definitions in the document named {operationName}.
-    * {operations} must be a set of one.
+  * 对于文档中的每一个操作定义{operation}
+  * 使{operationName}为{operation}的名字。
+  * 如果存在{operationName}
+    * 使{operations}为文档中名为{operationName}的所有的操作定义。
+    * {operations}必然是只有一个值的集合。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Each named operation definition must be unique within a document when referred
-to by its name.
+每一个具名操作定义必须是在其文档中唯一，以便于使用其名字指代。
 
-For example the following document is valid:
+例如下列文档就是有效的：
 
 ```GraphQL
 query getDogName {
@@ -99,7 +98,7 @@ query getOwnerName {
 }
 ```
 
-While this document is invalid:
+然而这个文档是无效的：
 
 ```!graphql
 query getName {
@@ -117,7 +116,7 @@ query getName {
 }
 ```
 
-It is invalid even if the type of each operation is different:
+即便两个操作类型是不同的，它也是无效的：
 
 ```!graphql
 query dogOperation {
@@ -137,19 +136,18 @@ mutation dogOperation {
 
 #### Lone Anonymous Operation/单独匿名操作
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * Let {operations} be all operation definitions in the document.
-  * Let {anonymous} be all anonymous operation definitions in the document.
-  * If {operations} is a set of more than 1:
-    * {anonymous} must be empty.
+  * 使{operations}为文档中所有的操作定义。
+  * 使{anonymous}为文档中所有的匿名操作定义。
+  * 如果{operations}集合多余1个值:
+    * {anonymous}必须为空.
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-GraphQL allows a short-hand form for defining query operations when only that
-one operation exists in the document.
+GraphQL允许在文档只有一个操作存在时用简写形式定义查询操作。
 
-For example the following document is valid:
+例如下列文档就是有效的：
 
 ```GraphQL
 {
@@ -159,7 +157,7 @@ For example the following document is valid:
 }
 ```
 
-While this document is invalid:
+然而这个文档是无效的：
 
 ```!graphql
 {
@@ -181,17 +179,17 @@ query getName {
 
 #### Single root field/单个根级字段
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each subscription operation definition {subscription} in the document
-  * Let {rootFields} be the top level selection set on {subscription}.
-    * {rootFields} must be a set of one.
+  * 对于文档中的每一个订阅定义{subscription}。
+  * 使{rootFields}为{subscription}上的顶级选择集。
+    * {rootFields}必然是只有一个值的集合。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Subscription operations must have exactly one root field.
+订阅操作必须只有一个根字段。
 
-Valid examples:
+有效案例：
 
 ```GraphQL
 subscription sub {
@@ -215,7 +213,7 @@ subscription sub {
 }
 ```
 
-Invalid:
+无效案例：
 
 ```!graphql
 subscription sub {
@@ -227,7 +225,7 @@ subscription sub {
 }
 ```
 
-Introspection fields are counted. The following example is also invalid:
+内省字段也是计算在内的，以下案例是无效的：
 
 ```!graphql
 subscription sub {
@@ -243,18 +241,17 @@ subscription sub {
 
 ### Field Selections on Objects, Interfaces, and Unions Types/对象、接口和联合上的字段选择
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {selection} in the document.
-  * Let {fieldName} be the target field of {selection}
-  * {fieldName} must be defined on type in scope
+  * 对于文档中的每一个{selection}。
+  * 使{fieldName}为{selection}的目标字段。
+  * {fieldName}必须定义在范围内的类型上。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-The target field of a field selection must be defined on the scoped type of the
-selection set. There are no limitations on alias names.
+字段选择的目标字段必须定义在选择集的范围类型上。对别名没有限制。
 
-For example the following fragment would not pass validation:
+譬如下列片段无法通过验证：
 
 ```!graphql
 fragment fieldNotDefined on Dog {
@@ -266,11 +263,9 @@ fragment aliasedLyingFieldTargetNotDefined on Dog {
 }
 ```
 
-For interfaces, direct field selection can only be done on fields. Fields
-of concrete implementors are not relevant to the validity of the given
-interface-typed selection set.
+对于接口，直接的字段选择只能在字段上操作，（接口）具体实现（对象）的字段与给定接口类型选择集的有效性没有相关性。
 
-For example, the following is valid:
+例如，以下是有效的：
 
 ```GraphQL
 fragment interfaceFieldSelection on Pet {
@@ -278,7 +273,7 @@ fragment interfaceFieldSelection on Pet {
 }
 ```
 
-and the following is invalid:
+而以下是无效的：
 
 ```!graphql
 fragment definedOnImplementorsButNotInterface on Pet {
@@ -286,12 +281,9 @@ fragment definedOnImplementorsButNotInterface on Pet {
 }
 ```
 
-Because unions do not define fields, fields may not be directly selected from a
-union-typed selection set, with the exception of the meta-field {__typename}.
-Fields from a union-typed selection set must only be queried indirectly via
-a fragment.
+因为联合上并没有定义字段，字段没法直接从联合类型选择集上选出，除了元字段{__typename}这个特例。联合类型选择集上的字段必须仅通过片段查询。
 
-For example the following is valid:
+例如，以下是有效的：
 
 ```GraphQL
 fragment inDirectFieldSelectionOnUnion on CatOrDog {
@@ -305,7 +297,7 @@ fragment inDirectFieldSelectionOnUnion on CatOrDog {
 }
 ```
 
-But the following is invalid:
+但是以下是无效的：
 
 ```!graphql
 fragment directFieldSelectionOnUnion on CatOrDog {
@@ -317,57 +309,48 @@ fragment directFieldSelectionOnUnion on CatOrDog {
 
 ### Field Selection Merging/字段选择合并
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * Let {set} be any selection set defined in the GraphQL document.
-  * {FieldsInSetCanMerge(set)} must be true.
+  * 使{set}为GraphQL文档上定义的任意选择集。
+  * {FieldsInSetCanMerge(set)}必然为true。
 
-FieldsInSetCanMerge(set) :
-  * Let {fieldsForName} be the set of selections with a given response name in
-    {set} including visiting fragments and inline fragments.
-  * Given each pair of members {fieldA} and {fieldB} in {fieldsForName}:
-    * {SameResponseShape(fieldA, fieldB)} must be true.
-    * If the parent types of {fieldA} and {fieldB} are equal or if either is not
-      an Object Type:
-      * {fieldA} and {fieldB} must have identical field names.
-      * {fieldA} and {fieldB} must have identical sets of arguments.
-      * Let {mergedSet} be the result of adding the selection set of {fieldA}
-        and the selection set of {fieldB}.
-      * {FieldsInSetCanMerge(mergedSet)} must be true.
+FieldsInSetCanMerge(set)：
+  * 使{fieldsForName}为包含访问片段和内联片段的{set}中给定响应名的选择集。
+  * 假设{fieldsForName}有一对成员{fieldA}和{fieldB}：
+    * {SameResponseShape(fieldA, fieldB)}必须为true。
+    * 如果{fieldA}和{fieldB}的父类型一样或者都不为对象类型：
+      * {fieldA}和{fieldB}必然有相同的字段名。
+      * {fieldA}和{fieldB}必然有相同的参数集。
+      * 使{mergedSet}为选择集{fieldA}和{fieldB}相加的结果。
+      * {FieldsInSetCanMerge(mergedSet)}必然为true。
 
-SameResponseShape(fieldA, fieldB) :
-  * Let {typeA} be the return type of {fieldA}.
-  * Let {typeB} be the return type of {fieldB}.
-  * If {typeA} or {typeB} is Non-Null.
-    * {typeA} and {typeB} must both be Non-Null.
-    * Let {typeA} be the nullable type of {typeA}
-    * Let {typeB} be the nullable type of {typeB}
-  * If {typeA} or {typeB} is List.
-    * {typeA} and {typeB} must both be List.
-    * Let {typeA} be the item type of {typeA}
-    * Let {typeB} be the item type of {typeB}
-    * Repeat from step 3.
-  * If {typeA} or {typeB} is Scalar or Enum.
-    * {typeA} and {typeB} must be the same type.
-  * Assert: {typeA} and {typeB} are both composite types.
-  * Let {mergedSet} be the result of adding the selection set of {fieldA} and
-    the selection set of {fieldB}.
-  * Let {fieldsForName} be the set of selections with a given response name in
-    {mergedSet} including visiting fragments and inline fragments.
-  * Given each pair of members {subfieldA} and {subfieldB} in {fieldsForName}:
-    * {SameResponseShape(subfieldA, subfieldB)} must be true.
+SameResponseShape(fieldA, fieldB)：
+  * 使{typeA}为{fieldA}的返回类型。
+  * 使{typeB}为{fieldB}的返回类型。
+  * 如果{typeA}或者{typeB}是Non-Null非空类型。
+    * {typeA}和{typeB}必然两个都是Non-Null类型。
+    * 使{typeA}为{typeA}的可空类型
+    * 使{typeB}为{typeB}的可空类型
+  * 如果{typeA}或者{typeB}是List列表类型。
+    * {typeA}和{typeB}必然两个都是List类型
+    * 使{typeA}为{typeA}的元素类型
+    * 使{typeB}为{typeB}的元素类型
+    * 从第3步重复。
+  * 如果{typeA}或者{typeB}是Scalar标量或者Enum枚举型。
+    * {typeA}和{typeB}必然是相同类型。
+  * 断言：{typeA}和{typeB}都是组合类型。
+  * 使{mergedSet}为选择集{fieldA}和{fieldB}相加的结果。
+  * 使{fieldsForName}为包含访问片段和内联片段的{set}中给定响应名的选择集。
+  * 假设{fieldsForName}有一对成员{subfieldA}和{subfieldB}：
+    * {SameResponseShape(subfieldA, subfieldB)}必然为true。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-If multiple field selections with the same response names are encountered
-during execution, the field and arguments to execute and the resulting value
-should be unambiguous. Therefore any two field selections which might both be
-encountered for the same object are only valid if they are equivalent.
+如果执行期间遇到了相同响应名的多个字段选择，执行的字段和参数以及结果值都应该避免歧义。然而，任意两个字段选择能在同一个对象里面遇到还是有效的，那只能是它们等价的情况。
 
-For simple hand-written GraphQL, this rule is obviously a clear developer error,
-however nested fragments can make this difficult to detect manually.
+对于简单的手写GraphQL，这个规则明显是一个开发者错误，然而对于嵌套片段，就很难手动检查到这个问题。
 
-The following selections correctly merge:
+以下选择正确地合并：
 
 ```GraphQL
 fragment mergeIdenticalFields on Dog {
@@ -381,7 +364,7 @@ fragment mergeIdenticalAliasesAndFields on Dog {
 }
 ```
 
-The following is not able to merge:
+以下则无法合并：
 
 ```!graphql
 fragment conflictingBecauseAlias on Dog {
@@ -390,10 +373,9 @@ fragment conflictingBecauseAlias on Dog {
 }
 ```
 
-Identical arguments are also merged if they have identical arguments. Both
-values and variables can be correctly merged.
+如果它们有相同的参数，那么这个相同的参数也会被合并。值和参数都能正确地合并。
 
-For example the following correctly merge:
+例如以下正确地合并：
 
 ```GraphQL
 fragment mergeIdenticalFieldsWithIdenticalArgs on Dog {
@@ -407,7 +389,7 @@ fragment mergeIdenticalFieldsWithIdenticalValues on Dog {
 }
 ```
 
-The following do not correctly merge:
+以下并不正确得合并：
 
 ```!graphql
 fragment conflictingArgsOnValues on Dog {
@@ -431,8 +413,7 @@ fragment differingArgs on Dog {
 }
 ```
 
-The following fields would not merge together, however both cannot be
-encountered against the same object, so they are safe:
+下面的字段不会合并在一起，然而它们也不会在同一个对象上相遇，所以它们是安全的：
 
 ```GraphQL
 fragment safeDifferingFields on Pet {
@@ -454,9 +435,7 @@ fragment safeDifferingArgs on Pet {
 }
 ```
 
-However, the field responses must be shapes which can be merged. For example,
-scalar values must not differ. In this example, `someValue` might be a `String`
-or an `Int`:
+然而，字段响应必须形状上能合并，譬如，标量不可变。下列例子中，`someValue`可能是`String`或者`Int`：
 
 ```!graphql
 fragment conflictingDifferingResponses on Pet {
@@ -472,21 +451,20 @@ fragment conflictingDifferingResponses on Pet {
 
 ### Leaf Field Selections/叶子节点选择
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {selection} in the document
-  * Let {selectionType} be the result type of {selection}
-  * If {selectionType} is a scalar:
-    * The subselection set of that selection must be empty
-  * If {selectionType} is an interface, union, or object
-    * The subselection set of that selection must NOT BE empty
+  * 对于文档中的每一个{selection}
+  * 使{selectionType}为{selection}的结果类型
+  * 如果{selectionType}是一个标量：
+    * 这个选择的下级选择必须为空
+  * 如果{selectionType}是一个接口、联合或者对象
+    * 这个选择的下级选择必**不**为空
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Field selections on scalars are never allowed: scalars
-are the leaf nodes of any GraphQL query.
+标量上的字段选择是不允许的，标量在任何GraphQL查询的都只是叶子节点。
 
-The following is valid.
+下列是有效的。
 
 ```GraphQL
 fragment scalarSelection on Dog {
@@ -494,7 +472,7 @@ fragment scalarSelection on Dog {
 }
 ```
 
-The following is invalid.
+下列是无效的。
 
 ```!graphql
 fragment scalarSelectionsNotAllowedOnBoolean on Dog {
@@ -504,13 +482,11 @@ fragment scalarSelectionsNotAllowedOnBoolean on Dog {
 }
 ```
 
-Conversely the leaf field selections of GraphQL queries
-must be scalars. Leaf selections on objects, interfaces,
-and unions without subfields are disallowed.
+相反的，GraphQL查询的叶子字段选择必须为标量。在接口、联合或者对象上的选择也不允许没有下级选择。
 
-Let's assume the following additions to the query root type of the schema:
+假设schema有下列查询根类型的补充内容：
 
-```
+```GraphQL
 extend type QueryRoot {
   human: Human
   pet: Pet
@@ -518,7 +494,7 @@ extend type QueryRoot {
 }
 ```
 
-The following examples are invalid
+以下案例是无效的
 
 ```!graphql
 query directQueryOnObjectWithoutSubFields {
@@ -537,25 +513,23 @@ query directQueryOnUnionWithoutSubFields {
 
 ## Arguments/参数
 
-Arguments are provided to both fields and directives. The following validation
-rules apply in both cases.
+参数在字段和指令上都有使用，下列验证规则可应用于这两种情况。
 
 
 ### Argument Names/参数名
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {argument} in the document
-  * Let {argumentName} be the Name of {argument}.
-  * Let {argumentDefinition} be the argument definition provided by the parent field or definition named {argumentName}.
-  * {argumentDefinition} must exist.
+  * 对于文档中的每一个{argument}。
+  * 使{argumentName}为{argument}的名字。
+  * 使{argumentDefinition}为父字段提供的参数定义或者名为{argumentName}的的定义。
+  * {argumentDefinition}必然存在。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Every argument provided to a field or directive must be defined in the set of
-possible arguments of that field or directive.
+提供给字段或者指令的每一个参数，必须在字段或者指令的可能参数集合中定义。
 
-For example the following are valid:
+譬如下列是有效的：
 
 ```GraphQL
 fragment argOnRequiredArg on Dog {
@@ -567,7 +541,7 @@ fragment argOnOptional on Dog {
 }
 ```
 
-the following is invalid since `command` is not defined on `DogCommand`.
+下列是无效，因为`command`并没有定义在`DogCommand`上。
 
 ```!graphql
 fragment invalidArgName on Dog {
@@ -575,7 +549,7 @@ fragment invalidArgName on Dog {
 }
 ```
 
-and this is also invalid as `unless` is not defined on `@include`.
+而这个也是无效，因为`unless`并没有定义在`@include`上。
 
 ```!graphql
 fragment invalidArgName on Dog {
@@ -583,10 +557,10 @@ fragment invalidArgName on Dog {
 }
 ```
 
-In order to explore more complicated argument examples, let's add the following
-to our type system:
 
-```
+为了展示更复杂的参数案例，我们添加下列（补充内容）到我们的类型系统：
+
+```GraphQL
 type Arguments {
   multipleReqs(x: Int!, y: Int!): Int!
   booleanArgField(booleanArg: Boolean): Boolean
@@ -601,7 +575,7 @@ extend type QueryRoot {
 }
 ```
 
-Order does not matter in arguments. Therefore both the following example are valid.
+参数的顺序并不重要，因此下列两个案例对有效的：
 
 ```GraphQL
 fragment multipleArgs on Arguments {
@@ -616,38 +590,35 @@ fragment multipleArgsReverseOrder on Arguments {
 
 ### Argument Uniqueness/参数唯一性
 
-Fields and directives treat arguments as a mapping of argument name to value.
-More than one argument with the same name in an argument set is ambiguous
-and invalid.
+字段和指令将参数视作参数名到从参数值的映射，一个参数集合内有多于一个参数拥有一个样的参数名时将会产生歧义，也是无效的。
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {argument} in the Document.
-  * Let {argumentName} be the Name of {argument}.
-  * Let {arguments} be all Arguments named {argumentName} in the Argument Set which contains {argument}.
-  * {arguments} must be the set containing only {argument}.
+  * 对于文档中的每一个{argument}。
+  * 使{argumentName}为{argument}的名字。
+  * 使{arguments}为参数集合中所有具有{argumentName}的名字且包含{argument}的所有参数。
+  * {arguments}必然是只包含{argument}的集合。
 
 
 ### Argument Values Type Correctness/参数值类型正确性
 
 #### Compatible Values/兼容值
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {argument} in the document
-  * Let {value} be the Value of {argument}
-  * If {value} is not a Variable
-    * Let {argumentName} be the Name of {argument}.
-    * Let {argumentDefinition} be the argument definition provided by the parent field or definition named {argumentName}.
-    * Let {type} be the type expected by {argumentDefinition}.
-    * The type of {literalArgument} must be coercible to {type}.
+  * 对于文档中的每一个{argument}。
+  * 使{value}为{argument}的值。
+  * 如果{value}不是一个变量
+    * 使{argumentName}为{argument}的名字。
+    * 使{argumentDefinition}为父字段提供的参数定义或者名为{argumentName}的的定义。
+    * 使{type}为{argumentDefinition}所期望的类型。
+    * {literalArgument}的类型必须被转换为{type}。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Literal values must be compatible with the type defined by the argument they are
-being provided to, as per the coercion rules defined in the Type System chapter.
+字面量值必须和使用它的参数的类型相兼容，兼容规则为类型系统章节所定义的转换规则。
 
-For example, an Int can be coerced into a Float.
+譬如，一个Int型可以被转换为Float型。
 
 ```GraphQL
 fragment goodBooleanArg on Arguments {
@@ -659,8 +630,7 @@ fragment coercedIntIntoFloatArg on Arguments {
 }
 ```
 
-An incoercible conversion, is string to int. Therefore, the
-following example is invalid.
+而String到Int则是不可转换的，因此下面的案例是无效的：
 
 ```!graphql
 fragment stringIntoInt on Arguments {
@@ -671,25 +641,23 @@ fragment stringIntoInt on Arguments {
 
 #### Required Non-Null Arguments/必要非空参数
 
-  * For each Field or Directive in the document.
-  * Let {arguments} be the arguments provided by the Field or Directive.
-  * Let {argumentDefinitions} be the set of argument definitions of that Field or Directive.
-  * For each {definition} in {argumentDefinitions}:
-    * Let {type} be the expected type of {definition}.
-    * If {type} is Non-Null:
-      * Let {argumentName} be the name of {definition}.
-      * Let {argument} be the argument in {arguments} named {argumentName}
-      * {argument} must exist.
-      * Let {value} be the value of {argument}.
-      * {value} must not be the {null} literal.
+  * 对于文档中的每一个字段或指令。
+  * 使{arguments}为字段或指令提供的参数。
+  * 使{argumentDefinitions}为字段或指令的参数定义集合。
+  * 对于{argumentDefinitions}上的每一个{definition}：
+    * 使{type}为{definition}所需要的类型。
+    * 如果{type}是Non-Null非空：
+      * 使{argumentName}为{definition}的名字。
+      * 使{argument}为{arguments}中名为{argumentName}的参数。
+      * {argument}必然存在。
+      * 使{value}为{argument}的值。
+      * {value}不可为{null}字面量。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Arguments can be required. If the argument type is non-null the argument is
-required and furthermore the explicit value {null} may not be provided.
-Otherwise, the argument is optional.
+参数也能是必要的，只要参数的类型是非空，那么这个参数就是必须的，且显式值{null}也不能用于此。否则参数是可选的。
 
-For example the following are valid:
+例如以下是有效的：
 
 ```GraphQL
 fragment goodBooleanArg on Arguments {
@@ -701,9 +669,9 @@ fragment goodNonNullArg on Arguments {
 }
 ```
 
-The argument can be omitted from a field with a nullable argument.
+可空参数的字段，参数可以省略。
 
-Therefore the following query is valid:
+因此以下是有效的：
 
 ```GraphQL
 fragment goodBooleanArgDefault on Arguments {
@@ -711,7 +679,7 @@ fragment goodBooleanArgDefault on Arguments {
 }
 ```
 
-but this is not valid on a non-null argument.
+但是这对于一个非空参数就不是有效的了。
 
 ```!graphql
 fragment missingRequiredArg on Arguments {
@@ -719,7 +687,7 @@ fragment missingRequiredArg on Arguments {
 }
 ```
 
-Providing the explicit value {null} is also not valid.
+使用显式值{null}也是无效的。
 
 ```!graphql
 fragment missingRequiredArg on Arguments {
@@ -733,22 +701,20 @@ fragment missingRequiredArg on Arguments {
 
 #### Fragment Name Uniqueness/片段名唯一性
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each fragment definition {fragment} in the document
-  * Let {fragmentName} be the name of {fragment}.
-  * Let {fragments} be all fragment definitions in the document named {fragmentName}.
-  * {fragments} must be a set of one.
+  * 对于文档中的每一个{fragment}。
+  * 使{fragmentName}为{fragment}的名字。
+  * 使{fragments}为文档中名为{fragmentName}的所有片段定义。
+  * {fragments}必然是只有一个值的集合。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Fragment definitions are referenced in fragment spreads by name. To avoid
-ambiguity, each fragment's name must be unique within a document.
+片段定义在片段解构中使用名字引用。为避免歧义，每一个片段都必须是片段内唯一。
 
-Inline fragments are not considered fragment definitions, and are unaffected by this
-validation rule.
+行内片段并不被当作片段定义，也不被这些验证规则影响。
 
-For example the following document is valid:
+例如以下文档是有效的：
 
 ```GraphQL
 {
@@ -769,7 +735,7 @@ fragment fragmentTwo on Dog {
 }
 ```
 
-While this document is invalid:
+然而这个文档是无效的：
 
 ```!graphql
 {
@@ -790,21 +756,19 @@ fragment fragmentOne on Dog {
 ```
 
 
-#### Fragment Spread Type Existence/片段结构类型存在性
+#### Fragment Spread Type Existence/片段解构类型存在性
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each named spread {namedSpread} in the document
-  * Let {fragment} be the target of {namedSpread}
-  * The target type of {fragment} must be defined in the schema
+  * 对于文档中的每一个文档解构{namedSpread}
+  * 使{fragment}为{namedSpread}的目标
+  * {fragment}的目标类型必须在schema中定义过的。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Fragments must be specified on types that exist in the schema. This
-applies for both named and inline fragments. If they are
-not defined in the schema, the query does not validate.
+片段必须在schema中存在的类型上指定，这同时适用于具名片段和内联片段。如果它们不存在于schema上，那么这个查询则无法通过验证。
 
-For example the following fragments are valid:
+譬如下列片段是有效的：
 
 ```GraphQL
 fragment correctType on Dog {
@@ -824,7 +788,7 @@ fragment inlineFragment2 on Dog {
 }
 ```
 
-and the following do not validate:
+而下列无法通过验证：
 
 ```!graphql
 fragment notOnExistingType on NotInSchema {
@@ -841,19 +805,16 @@ fragment inlineNotExistingType on Dog {
 
 #### Fragments On Composite Types/组合类型上的片段
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {fragment} defined in the document.
-  * The target type of fragment must have kind {UNION}, {INTERFACE}, or
-    {OBJECT}.
+  * 对于定义在文档内的每一个{fragment}。
+  * 片段的目标类型必须是{UNION}、{INTERFACE}或者{OBJECT}类型。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Fragments can only be declared on unions, interfaces, and objects. They are
-invalid on scalars. They can only be applied on non-leaf fields. This rule
-applies to both inline and named fragments.
+片段只能在联合、接口和对象上声明，在标量上是无效的，只能应用与非叶子节点，这个规则同时适用于具名片段和行内片段。
 
-The following fragment declarations are valid:
+下列片段声明是有效的：
 
 ```GraphQL
 fragment fragOnObject on Dog {
@@ -871,7 +832,7 @@ fragment fragOnUnion on CatOrDog {
 }
 ```
 
-and the following are invalid:
+而下列是无效的：
 
 ```!graphql
 fragment fragOnScalar on Int {
@@ -888,16 +849,16 @@ fragment inlineFragOnScalar on Dog {
 
 #### Fragments Must Be Used/必须使用的片段
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {fragment} defined in the document.
-  * {fragment} must be the target of at least one spread in the document
+  * 对于文档中的每一个{fragment}。
+  * {fragment}必然是文档中至少一个解构的目标。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Defined fragments must be used within a query document.
+已定义的片段必须在查询文档中使用。
 
-For example the following is an invalid query document:
+例如下列是一个无效的查询文档：
 
 ```!graphql
 fragment nameFragment on Dog { # unused
@@ -914,25 +875,20 @@ fragment nameFragment on Dog { # unused
 
 ### Fragment Spreads/片段解构
 
-Field selection is also determined by spreading fragments into one
-another. The selection set of the target fragment is unioned with
-the selection set at the level at which the target fragment is
-referenced.
+字段选择也被片段解构之间的互相调用决定。譬如目标片段的选择集和同级的引用目标片段相联合。
 
 
 #### Fragment spread target defined/片段解构目标必须预先定义
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {namedSpread} in the document.
-  * Let {fragment} be the target of {namedSpread}
-  * {fragment} must be defined in the document
+  * 对于文档中的每一个{namedSpread}。
+  * 使{fragment}为{namedSpread}的目标。
+  * {fragment}必须在文档中预先定义。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Named fragment spreads must refer to fragments defined
-within the document.  If the target of a spread is
-not defined, this is an error:
+具名片段解构必须指定文档中已经定义的片段。如果结构的目标没有定义，则将会报错：
 
 ```!graphql
 {
@@ -945,27 +901,25 @@ not defined, this is an error:
 
 #### Fragment spreads must not form cycles/片段解构不可造成循环
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {fragmentDefinition} in the document
-  * Let {visited} be the empty set.
+  * 对于文档中的每一个{fragmentDefinition}
+  * 使{visited}为一个空集。
   * {DetectCycles(fragmentDefinition, visited)}
 
-{DetectCycles(fragmentDefinition, visited)} :
-  * Let {spreads} be all fragment spread descendants of {fragmentDefinition}
-  * For each {spread} in {spreads}
-    * {visited} must not contain {spread}
-    * Let {nextVisited} be the set including {spread} and members of {visited}
-    * Let {nextFragmentDefinition} be the target of {spread}
+{DetectCycles(fragmentDefinition, visited)}：
+  * 使{spreads}为为{fragmentDefinition}的所有片段解构后代。
+  * 对于{spreads}的每一个{spread}
+    * {visited}必不包含{spread}
+    * 使{nextVisited}为包含{spread}和{visited}成员的集合
+    * 使{nextFragmentDefinition}为{spread}的目标
     * {DetectCycles(nextFragmentDefinition, nextVisited)}
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-The graph of fragment spreads must not form any cycles including spreading itself.
-Otherwise an operation could infinitely spread or infinitely execute on cycles
-in the underlying data.
+片段结构的图不可造成任何循环，即便是对自身的解构。否则一个操作会下层数据的环上无尽地结构无尽地执行。
 
-This invalidates fragments that would result in an infinite spread:
+这使可能导致无尽解构的片段失效；
 
 ```!graphql
 {
@@ -985,7 +939,7 @@ fragment barkVolumeFragment on Dog {
 }
 ```
 
-If the above fragments were inlined, this would result in the infinitely large:
+如果上述片段被引入，则会导致结果无限大：
 
 ```GraphQL
 {
@@ -1002,8 +956,7 @@ If the above fragments were inlined, this would result in the infinitely large:
 }
 ```
 
-This also invalidates fragments that would result in an infinite recursion when
-executed against cyclic data:
+这也会使导致循环数据上结果无限递归的片段无效：
 
 ```!graphql
 {
@@ -1030,37 +983,30 @@ fragment ownerFragment on Dog {
 
 #### Fragment spread is possible/片段结构必须可行
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {spread} (named or inline) defined in the document.
-  * Let {fragment} be the target of {spread}
-  * Let {fragmentType} be the type condition of {fragment}
-  * Let {parentType} be the type of the selection set containing {spread}
-  * Let {applicableTypes} be the intersection of
-    {GetPossibleTypes(fragmentType)} and {GetPossibleTypes(parentType)}
-  * {applicableTypes} must not be empty.
+  * 对于文档中定义的每样个（具名的和内联的）{spread}。
+  * 使{fragment}为{spread}的目标。
+  * 使{fragmentType}为{fragment}的类型条件
+  * 使{parentType}为包含{spread}的类型选择集合
+  * 使{applicableTypes}为{GetPossibleTypes(fragmentType)}和{GetPossibleTypes(parentType)}的交集。
+  * {applicableTypes}必不为空。
 
-GetPossibleTypes(type) :
-  * If {type} is an object type, return a set containing {type}
-  * If {type} is an interface type, return the set of types implementing {type}
-  * If {type} is a union type, return the set of possible types of {type}
+GetPossibleTypes(type)：
+  * 如果{type}是一个object/对象类型非，返回包含{type}的集合
+  * 如果{type}是一个interface/接口类型非，返回实现{type}的集合
+  * 如果{type}是一个union/联合类型非，返回{type}的可能类型的集合
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Fragments are declared on a type and will only apply when the
-runtime object type matches the type condition. They also are
-spread within the context of a parent type. A fragment spread
-is only valid if its type condition could ever apply within
-the parent type.
+片段在一个类型上声明，并只在这个运行时对象匹配类型条件的时候应用。它们也能在父类型的上下文中解构。片段解构只有在类型条件能够应用与父类型的时候有效。
 
 
 ##### Object Spreads In Object Scope/对象范围内的对象解构
 
-In the scope of an object type, the only valid object type
-fragment spread is one that applies to the same type that
-is in scope.
+在一个对象类型范围内，唯一有效的对象类型片段解构是能够应用与范围内同一类型的（片段）。
 
-For example
+例如：
 
 ```GraphQL
 fragment dogFragment on Dog {
@@ -1070,7 +1016,7 @@ fragment dogFragment on Dog {
 }
 ```
 
-and the following is invalid
+而下列是无效的
 
 ```!graphql
 fragment catInDogFragmentInvalid on Dog {
@@ -1083,10 +1029,9 @@ fragment catInDogFragmentInvalid on Dog {
 
 ##### Abstract Spreads in Object Scope/对象范围内的抽象解构
 
-In scope of an object type, unions or interface spreads can be used
-if the object type implements the interface or is a member of the union.
+在对象类型的范围，联合或者接口解构仅在对象类型实现了接口或者是联合的成员的时候可用。
 
-For example
+例如
 
 ```GraphQL
 fragment petNameFragment on Pet {
@@ -1098,9 +1043,9 @@ fragment interfaceWithinObjectFragment on Dog {
 }
 ```
 
-is valid because {Dog} implements Pet.
+是有效的，因为{Dog}实现了{Pet}
 
-Likewise
+同样
 
 ```GraphQL
 fragment catOrDogNameFragment on CatOrDog {
@@ -1114,20 +1059,14 @@ fragment unionWithObjectFragment on Dog {
 }
 ```
 
-is valid because {Dog} is a member of the {CatOrDog} union. It is worth
-noting that if one inspected the contents of the {CatOrDogNameFragment}
-you could note that no valid results would ever be returned. However
-we do not specify this as invalid because we only consider the fragment
-declaration, not its body.
+是有效的，因为{Dog}是{CatOrDog}联合的成员。如果观察{CatOrDogNameFragment}的内容，结果你发现没有任何有效结果可以返回，那么这个解构是没有意义的。但我们并不说这个是无效的，因为我们仅仅考虑片段声明，而非其主体。
 
 
 ##### Object Spreads In Abstract Scope/抽象范围内的对象解构
 
-Union or interface spreads can be used within the context of an object type
-fragment, but only if the object type is one of the possible types of
-that interface or union.
+在对象类型片段范围内，联合或者接口解构仅在对象类型是接口或者联合的可能类型之一时可用。
 
-For example, the following fragments are valid:
+例如，下列片段是有效的：
 
 ```GraphQL
 fragment petFragment on Pet {
@@ -1144,11 +1083,10 @@ fragment catOrDogFragment on CatOrDog {
 }
 ```
 
-{petFragment} is valid because {Dog} implements the interface {Pet}.
-{catOrDogFragment} is valid because {Cat} is a member of the
-{CatOrDog} union.
+{petFragment}有效是因为{Dog}实现了{Pet}。
+{catOrDogFragment}有效是因为{Cat}是{CatOrDog}联合的成员。
 
-By contrast the following fragments are invalid:
+相反地，下列片段是无效的：
 
 ```!graphql
 fragment sentientFragment on Sentient {
@@ -1164,19 +1102,14 @@ fragment humanOrAlienFragment on HumanOrAlien {
 }
 ```
 
-{Dog} does not implement the interface {Sentient} and therefore
-{sentientFragment} can never return meaningful results. Therefore the fragment
-is invalid. Likewise {Cat} is not a member of the union {HumanOrAlien}, and it
-can also never return meaningful results, making it invalid.
+{Dog}并没有实现{Sentient}接口，因此{sentientFragment}永远不会返回有意义的结果。因此这这个片段是无效的。同样的{Cat}并不是{HumanOrAlien}联合的成员，它也永远不会返回有意义的结果，从而是它无效了。
 
 
 ##### Abstract Spreads in Abstract Scope/抽象范围内的抽象解构
 
-Union or interfaces fragments can be used within each other. As long as there
-exists at least *one* object type that exists in the intersection of the
-possible types of the scope and the spread, the spread is considered valid.
+联合或者接口解构能在互相内部使用。只要存在*一个*对象在可能集合的交集中，这个对象的解构就被视为有效的。
 
-So for example
+因此下例
 
 ```GraphQL
 fragment unionWithInterface on Pet {
@@ -1190,10 +1123,9 @@ fragment dogOrHumanFragment on DogOrHuman {
 }
 ```
 
-is consider valid because {Dog} implements interface {Pet} and is a
-member of {DogOrHuman}.
+被视作有效，以内{Dog}实现了{Pet}并是{DogOrHuman}的成员。
 
-However
+然而
 
 ```!graphql
 fragment nonIntersectingInterfaces on Pet {
@@ -1205,8 +1137,7 @@ fragment sentientFragment on Sentient {
 }
 ```
 
-is not valid because there exists no type that implements both {Pet}
-and {Sentient}.
+并不有效，因为不存在同时实现了{Pet}和{Sentient}的类型。
 
 
 ## Values/值
@@ -1214,20 +1145,19 @@ and {Sentient}.
 
 ### Input Object Field Uniqueness/输入对象字段唯一性
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each input object value {inputObject} in the document.
-  * For every {inputField} in {inputObject}
-    * Let {name} be the Name of {inputField}.
-    * Let {fields} be all Input Object Fields named {name} in {inputObject}.
-    * {fields} must be the set containing only {inputField}.
+  * 对于文档中的每一个输入对象值{inputObject}。
+  * 对于{inputObject}中的每一个{inputField}
+    * 使{name}为{inputField}的名字
+    * 使{fields} be all Input Object Fields named {name} in {inputObject}.
+    * {fields}必然是仅包含{inputField}的集合。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Input objects must not contain more than one field of the same name, otherwise
-an ambiguity would exist which includes an ignored portion of syntax.
+输入对象不能包含多余一个同名的字段，否则存在让部分句法被忽略的歧义。
 
-For example the following query will not pass validation.
+例如，下列查询并不会通过验证。
 
 ```!graphql
 {
@@ -1241,38 +1171,34 @@ For example the following query will not pass validation.
 
 ### Directives Are Defined/指令必须预先定义
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {directive} in a document.
-  * Let {directiveName} be the name of {directive}.
-  * Let {directiveDefinition} be the directive named {directiveName}.
-  * {directiveDefinition} must exist.
+  * 对于文档中的每一个{directive}。
+  * 使{directiveName}为{directive}的名字。
+  * 使{directiveDefinition}为名为{directiveName}的指令。
+  * {directiveDefinition}必然存在。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-GraphQL servers define what directives they support. For each
-usage of a directive, the directive must be available on that server.
+GraphQL服务器定义他们支持的指令，对于每个指令的使用，必须要指令在服务器上可用。
 
 
 ### Directives Are In Valid Locations/指令必须在有效位置
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {directive} in a document.
-  * Let {directiveName} be the name of {directive}.
-  * Let {directiveDefinition} be the directive named {directiveName}.
-  * Let {locations} be the valid locations for {directiveDefinition}.
-  * Let {adjacent} be the AST node the directive affects.
-  * {adjacent} must be represented by an item within {locations}.
+  * 对于文档中的每一个{directive}。
+  * 使{directiveName}为{directive}的名字。
+  * 使{directiveDefinition}为名为{directiveName}的指令。
+  * 使{locations}为{directiveDefinition}的有效位置。
+  * 使{adjacent}为收到指令影响的AST（抽象语法树）节点。
+  * {adjacent}必须以{locations}内的元素来表示。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-GraphQL servers define what directives they support and where they support them.
-For each usage of a directive, the directive must be used in a location that the
-server has declared support for.
+GraphQL定义了他们支持的指令，在何处支持。每一指令的使用，都必须在服务器声明支持使用的地方。
 
-For example the following query will not pass validation because `@skip` does
-not provide `QUERY` as a valid location.
+譬如，下列查询无法通过验证，因为`@skip`在`QUERY`上，并不是有效位置。
 
 ```!graphql
 query @skip(if: $foo) {
@@ -1283,25 +1209,20 @@ query @skip(if: $foo) {
 
 ### Directives Are Unique Per Location/每个位置的指令都必须唯一
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {location} in the document for which Directives can apply:
-    * Let {directives} be the set of Directives which apply to {location}.
-    * For each {directive} in {directives}:
-      * Let {directiveName} be the name of {directive}.
-      * Let {namedDirectives} be the set of all Directives named {directiveName}
-        in {directives}.
-      * {namedDirectives} must be a set of one.
+  * 对于文档中指令可是应用的{location}：
+    * 使{directives}为应用于{location}的指令集合。
+    * 对于{directives}中的每一个{directive}：
+      * 使{directiveName}为{directive}的名字。
+      * 使{namedDirectives}为{directives}中名为{directiveName}的指令集合。
+      * {namedDirectives}必然是只有一个值的集合。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Directives are used to describe some metadata or behavioral change on the
-definition they apply to. When more than one directive of the same name is used,
-the expected metadata or behavior becomes ambiguous, therefore only one of each
-directive is allowed per location.
+指令用于描述其应用的定义的元数据或者表现的改变。当同名的指令多次使用时，期望的源数据或者表现就会变得有歧义，因此一个位置上只允许使用一个指令。
 
-For example, the following query will not pass validation because `@skip` has
-been used twice for the same field:
+譬如，下列查询不会通过验证，因为`@skip`在同一个字段上用了两次：
 
 ```!graphql
 query ($foo: Boolean = true, $bar: Boolean = false) {
@@ -1309,8 +1230,7 @@ query ($foo: Boolean = true, $bar: Boolean = false) {
 }
 ```
 
-However the following example is valid because `@skip` has been used only once
-per location, despite being used twice in the query and on the same named field:
+但是下面案例是有效的，因为`@skip`在每个位置只用了一次，即便在查询中同名的字段上用了两次：
 
 ```GraphQL
 query ($foo: Boolean = true, $bar: Boolean = false) {
@@ -1328,20 +1248,17 @@ query ($foo: Boolean = true, $bar: Boolean = false) {
 
 ### Variable Uniqueness/变量唯一性
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {operation} in the document
-    * For every {variable} defined on {operation}
-      * Let {variableName} be the name of {variable}
-      * Let {variables} be the set of all variables named {variableName} on
-        {operation}
-      * {variables} must be a set of one
+  * 对于文档中的每一个{operation}
+    * 对于{operation}中定义的每一个{variable}
+      * 使{variableName}为{variable}的名字
+      * 使{variables}为{operation}上名为{variableName}的变量集合
+      * {variables}必然是只有一个值的集合。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-If any operation defines more than one variable with the same name, it is
-ambiguous and invalid. It is invalid even if the type of the duplicate variable
-is the same.
+任意操作定了多于一个同名变量，将会变得有歧义，并是无效的。即便重复变量的值是一样的，他也是无效的。
 
 ```!graphql
 query houseTrainedQuery($atOtherHomes: Boolean, $atOtherHomes: Boolean) {
@@ -1352,8 +1269,7 @@ query houseTrainedQuery($atOtherHomes: Boolean, $atOtherHomes: Boolean) {
 ```
 
 
-It is valid for multiple operations to define a variable with the same name. If
-two operations reference the same fragment, it might actually be necessary:
+多个操作可以具有相同的变量名，特别是两个操作引用了同一个片段，这时候同名变量就是必要的了：
 
 ```GraphQL
 query A($atOtherHomes: Boolean) {
@@ -1374,21 +1290,19 @@ fragment HouseTrainedFragment {
 
 ### Variable Default Values Are Correctly Typed/变量默认值必须是正确的类型
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {operation} in a document
-  * For every {variable} on each {operation}
-    * Let {variableType} be the type of {variable}
-    * If {variableType} is non-null it cannot have a default value
-    * If {variable} has a default value it must be of the same type
-      or able to be coerced to {variableType}
+  * 对于文档中的每一个{operation}
+  * 对于每一个{operation}上的每一个{variable}
+    * 使{variableType}为{variable}的类型
+    * 如果{variableType}是non-null非空，则不能有默认值。
+    * 如果{variable}有默认值，则其必须是同样的类型或者能转换到{variableType}
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Variables defined by operations are allowed to define default values
-if the type of that variable is not non-null.
+操作中定一个变量都是可以定义默认值的，如果对应类型不是non-null。
 
-For example the following query will pass validation.
+例如，下列查询能通过验证。
 
 ```GraphQL
 query houseTrainedQuery($atOtherHomes: Boolean = true) {
@@ -1398,9 +1312,7 @@ query houseTrainedQuery($atOtherHomes: Boolean = true) {
 }
 ```
 
-However if the variable is defined as non-null, default values
-are unreachable. Therefore queries such as the following fail
-validation
+但是如果变量被定义为非空类型，那么默认值是不可达的，因此下列如同这样的查询就不会通过验证
 
 ```!graphql
 query houseTrainedQuery($atOtherHomes: Boolean! = true) {
@@ -1410,10 +1322,9 @@ query houseTrainedQuery($atOtherHomes: Boolean! = true) {
 }
 ```
 
-Default values must be compatible with the types of variables.
-Types must match or they must be coercible to the type.
+默认值必须和变量类型兼容，必须是匹配或者能转换到这种类型。
 
-Non-matching types fail, such as in the following example:
+不匹配的类型会失败，如下例：
 
 ```!graphql
 query houseTrainedQuery($atOtherHomes: Boolean = "true") {
@@ -1423,9 +1334,9 @@ query houseTrainedQuery($atOtherHomes: Boolean = "true") {
 }
 ```
 
-However if a type is coercible the query will pass validation.
+然而如果类型是可转换的，查询就能通过。
 
-For example:
+例如：
 
 ```GraphQL
 query intToFloatQuery($floatVar: Float = 1) {
@@ -1438,22 +1349,20 @@ query intToFloatQuery($floatVar: Float = 1) {
 
 ### Variables Are Input Types/变量必须是输入类型
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {operation} in a {document}
-  * For every {variable} on each {operation}
-    * Let {variableType} be the type of {variable}
-    * While {variableType} is {LIST} or {NON_NULL}
-      * Let {variableType} be the referenced type of {variableType}
-    * {variableType} must be of kind {SCALAR}, {ENUM} or {INPUT_OBJECT}
+  * 对{document}中的每一个{operation}
+  * 对每一个{operation}上的每一个{variable}
+    * 使{variableType}为{variable}的类型
+    * 当{variableType}是{LIST}或者{NON_NULL}
+      * 使{variableType}为{variableType}引用的类型
+    * {variableType}必然是{SCALAR}、{ENUM}或者{INPUT_OBJECT}类型
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Variables can only be scalars, enums, input objects, or lists and non-null
-variants of those types. These are known as input types. Objects, unions,
-and interfaces cannot be used as inputs.
+变量只能是标量、枚举型和输入对象，或者这些类型的列表和非空封装变体，这些是输入类型。而对象、联合、接口不能作为输入。
 
-For these examples, consider the following typesystem additions:
+对于这些的案例，假设有如下类型系统补充内容：
 
 ```
 input ComplexInput { name: String, owner: String }
@@ -1464,7 +1373,7 @@ extend type QueryRoot {
 }
 ```
 
-The following queries are valid:
+下列查询是有效的：
 
 ```GraphQL
 query takesBoolean($atOtherHomes: Boolean) {
@@ -1484,7 +1393,7 @@ query TakesListOfBooleanBang($booleans: [Boolean!]) {
 }
 ```
 
-The following queries are invalid:
+下列查询是无效的：
 
 ```!graphql
 query takesCat($cat: Cat) {
@@ -1507,22 +1416,19 @@ query takesCatOrDog($catOrDog: CatOrDog) {
 
 ### All Variable Uses Defined/所有变量的使用必须预先定义
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {operation} in a document
-    * For each {variableUsage} in scope, variable must be in {operation}'s variable list.
-    * Let {fragments} be every fragment referenced by that {operation} transitively
-    * For each {fragment} in {fragments}
-      * For each {variableUsage} in scope of {fragment}, variable must be in
-        {operation}'s variable list.
+  * 对于文档中的每一个{operation}
+    * 对于范围内的每一个{variableUsage}，变量必须在{operation}的变量列表中。
+    * 使{fragments}为{operation}传递引用的每一个片段
+    * 对于{fragments}中的每一个{fragment}
+      * 对于{fragment}范围内的每一个{variableUsage}，变量必须在{operation}的变量列表中。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Variables are scoped on a per-operation basis. That means that any variable
-used within the context of an operation must be defined at the top level of that
-operation
+变量的有效范围是在每一个操作内的，也就是说任何在操作上下文中要使用的变量，必须在那个操作的顶部预先定义。
 
-For example:
+例如：
 
 ```GraphQL
 query variableIsDefined($atOtherHomes: Boolean) {
@@ -1532,9 +1438,9 @@ query variableIsDefined($atOtherHomes: Boolean) {
 }
 ```
 
-is valid. ${atOtherHomes} is defined by the operation.
+是有效的，${atOtherHomes}由这个操作定义。
 
-By contrast the following query is invalid:
+相反，下面这个操作是无效的：
 
 ```!graphql
 query variableIsNotDefined {
@@ -1544,14 +1450,11 @@ query variableIsNotDefined {
 }
 ```
 
-${atOtherHomes} is not defined by the operation.
+${atOtherHomes}并没有被操作定义。
 
-Fragments complicate this rule. Any fragment transitively included by an
-operation has access to the variables defined by that operation. Fragments
-can appear within multiple operations and therefore variable usages
-must correspond to variable definitions in all of those operations.
+片段使这个规则复杂，被操作引入的任何片段都能接入那个操作定义的变量。片段可以出现在多个操作内，因此变量的使用必须和所有操作上的变量定义对应。
 
-For example the following is valid:
+譬如，下列是有效的：
 
 ```GraphQL
 query variableIsDefinedUsedInSingleFragment($atOtherHomes: Boolean) {
@@ -1565,12 +1468,9 @@ fragment isHousetrainedFragment on Dog {
 }
 ```
 
-since {isHousetrainedFragment} is used within the context of the operation
-{variableIsDefinedUsedInSingleFragment} and the variable is defined by that
-operation.
+因为{isHousetrainedFragment}在{variableIsDefinedUsedInSingleFragment}操作的上下文中使用，其参数也被也在这个操作上定义。
 
-On the other hand, if a fragment is included within an operation that does
-not define a referenced variable, the query is invalid.
+另一面，如果操作内引入的片段所使用的参数并没有在操作上定义，那么这个查询是无效的。
 
 ```!graphql
 query variableIsNotDefinedUsedInSingleFragment {
@@ -1584,7 +1484,7 @@ fragment isHousetrainedFragment on Dog {
 }
 ```
 
-This applies transitively as well, so the following also fails:
+这也是传递应用的，所以下列会失败：
 
 ```!graphql
 query variableIsNotDefinedUsedInNestedFragment {
@@ -1602,8 +1502,7 @@ fragment isHousetrainedFragment on Dog {
 }
 ```
 
-Variables must be defined in all operations in which a fragment
-is used.
+片段使用的变量必须在所有的操作上定义。
 
 ```GraphQL
 query housetrainedQueryOne($atOtherHomes: Boolean) {
@@ -1623,7 +1522,7 @@ fragment isHousetrainedFragment on Dog {
 }
 ```
 
-However the following does not validate:
+然而下面这个并不通过验证：
 
 ```!graphql
 query housetrainedQueryOne($atOtherHomes: Boolean) {
@@ -1643,28 +1542,22 @@ fragment isHousetrainedFragment on Dog {
 }
 ```
 
-This is because {housetrainedQueryTwoNotDefined} does not define
-a variable ${atOtherHomes} but that variable is used by {isHousetrainedFragment}
-which is included in that operation.
+这是因为{housetrainedQueryTwoNotDefined}并没有定变量${atOtherHomes}，但是这个变量被{isHousetrainedFragment}操作引入使用。
 
 
 ### All Variables Used/所有变量都必须被使用
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For every {operation} in the document.
-  * Let {variables} be the variables defined by that {operation}
-  * Each {variable} in {variables} must be used at least once in either
-    the operation scope itself or any fragment transitively referenced by that
-    operation.
+  * 对于文档中的每一个{operation}。
+  * 使{variables}为{operation}上定义的变量。
+  * {variables}中的每一个{variable}必须至少被使用一次，无论是操作本身使用，还是操作引入的片段通过传递引用使用。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-All variables defined by an operation must be used in that operation or a
-fragment transitively included by that operation. Unused variables cause
-a validation error.
+操作上定义的所有变量必须至少被使用一次，无论是操作本身使用，还是操作引入的片段通过传递引用使用。未使用的变量会导致验证错误。
 
-For example the following is invalid:
+例如，下列是无效的：
 
 ```!graphql
 query variableUnused($atOtherHomes: Boolean) {
@@ -1674,9 +1567,9 @@ query variableUnused($atOtherHomes: Boolean) {
 }
 ```
 
-because ${atOtherHomes} is not referenced.
+因为${atOtherHomes}没有被引用过。
 
-These rules apply to transitive fragment spreads as well:
+这个规则也适用于片段解构的传递引用：
 
 ```GraphQL
 query variableUsedInFragment($atOtherHomes: Boolean) {
@@ -1690,10 +1583,9 @@ fragment isHousetrainedFragment on Dog {
 }
 ```
 
-The above is valid since ${atOtherHomes} is used in {isHousetrainedFragment}
-which is included by {variableUsedInFragment}.
+上面是有效的，因为${atOtherHomes}在{isHousetrainedFragment}中被使用过了，其由{variableUsedInFragment}引入。
 
-If that fragment did not have a reference to ${atOtherHomes} it would be not valid:
+如果那个片段没有引用${atOtherHomes}，则是无效的：
 
 ```!graphql
 query variableNotUsedWithinFragment($atOtherHomes: Boolean) {
@@ -1705,9 +1597,9 @@ fragment isHousetrainedWithoutVariableFragment on Dog {
 }
 ```
 
-All operations in a document must use all of their variables.
+一个文档中的所有操作都必须使用他们所有的变量。
 
-As a result, the following document does not validate.
+从而，下列文档是无效的：
 
 ```!graphql
 query queryWithUsedVar($atOtherHomes: Boolean) {
@@ -1727,38 +1619,34 @@ fragment isHousetrainedFragment on Dog {
 }
 ```
 
-This document is not valid because {queryWithExtraVar} defines
-an extraneous variable.
+这个文档是无效的，因为{queryWithExtraVar}定义了额外的一个变量。
 
 
 ### All Variable Usages are Allowed/所有变量都允许使用
 
-**Formal Specification**
+**Formal Specification/形式规范**
 
-  * For each {operation} in {document}
-  * Let {variableUsages} be all usages transitively included in the {operation}
-  * For each {variableUsage} in {variableUsages}
-    * Let {variableType} be the type of variable definition in the {operation}
-    * Let {argumentType} be the type of the argument the variable is passed to.
-    * Let {hasDefault} be true if the variable definition defines a default.
-    * AreTypesCompatible({argumentType}, {variableType}, {hasDefault}) must be true
+  * {document}中的每一个{operation}
+  * 使{variableUsages}为{operation}引入的所有传递使用。
+  * 对于{variableUsages}中的每一个{variableUsage}
+    * 使{variableType}为{operation}上的变量定义的的类型。 
+    * 使{argumentType}为传递进去的参数的类型。
+    * 使{hasDefault}为true，如果参数定义有默认值。
+    * AreTypesCompatible({argumentType}, {variableType}, {hasDefault})必然为true
 
-  * AreTypesCompatible({argumentType}, {variableType}, {hasDefault}):
-    * If {hasDefault} is true, treat the {variableType} as non-null.
-    * If inner type of {argumentType} and {variableType} are different, return false
-    * If {argumentType} and {variableType} have different list dimensions, return false
-    * If any list level of {variableType} is not non-null, and the corresponding level
-      in {argument} is non-null, the types are not compatible.
+  * AreTypesCompatible({argumentType},{variableType}, {hasDefault})：
+    * 如果{hasDefault}为true，把{variableType}当作non-null非空。
+    * 如果{argumentType}和{variableType}的内部类型不相同，返回falae
+    * 如果{argumentType}和{variableType}的列表纬度不相同，返回falae
+    * 如果{variableType}的任意列表层级不是non-null，而{argument}对应的是non-null，则类型不兼容。
 
-**Explanatory Text**
+**Explanatory Text/解释文本**
 
-Variable usages must be compatible with the arguments they are passed to.
+变量使用必须和它们传递进去的参数兼容。
 
-Validation failures occur when variables are used in the context of types
-that are complete mismatches, or if a nullable type in a variable is passed to
-a non-null argument type.
+验证失败会发生在变量在类型上下文完全不匹配和传递可空类型参数给非空类型变量的时候。
 
-Types must match:
+类型必须匹配：
 
 ```!graphql
 query intCannotGoIntoBoolean($intArg: Int) {
@@ -1768,10 +1656,9 @@ query intCannotGoIntoBoolean($intArg: Int) {
 }
 ```
 
-${intArg} typed as {Int} cannot be used as a argument to {booleanArg}, typed as {Boolean}.
+${intArg}是{Int}类型，不能作为参数传递给{Boolean}类型的{booleanArg}。
 
-List cardinality must also be the same. For example, lists cannot be passed into singular
-values.
+列表基数也必须一样。例如，列表不能传递给单数值。
 
 ```!graphql
 query booleanListCannotGoIntoBoolean($booleanListArg: [Boolean]) {
@@ -1781,8 +1668,7 @@ query booleanListCannotGoIntoBoolean($booleanListArg: [Boolean]) {
 }
 ```
 
-Nullability must also be respected. In general a nullable variable cannot
-be passed to a non-null argument.
+可空性也同样重要。通常，空值变量不可传递给非空变量。
 
 ```!graphql
 query booleanArgQuery($booleanArg: Boolean) {
@@ -1792,8 +1678,7 @@ query booleanArgQuery($booleanArg: Boolean) {
 }
 ```
 
-A notable exception is when default arguments are provided. They are, in effect,
-treated as non-nulls.
+主要注意的例外是有默认参数的情况，这个参数会被视作非空。
 
 ```GraphQL
 query booleanArgQueryWithDefault($booleanArg: Boolean = true) {
@@ -1803,10 +1688,8 @@ query booleanArgQueryWithDefault($booleanArg: Boolean = true) {
 }
 ```
 
-For list types, the same rules around nullability apply to both outer types
-and inner types. A nullable list cannot be passed to a non-null list, and a list
-of nullable values cannot be passed to a list of non-null values.
-The following is valid:
+对于列表类型，跟可空性类似的规则同时应用与外部和内部类型，一个可空列表不能传入一个非空列表，一个可空值的列表不能传递给一个非空值的列表。
+下列是有效的：
 
 ```GraphQL
 query nonNullListToList($nonNullBooleanList: [Boolean]!) {
@@ -1816,7 +1699,7 @@ query nonNullListToList($nonNullBooleanList: [Boolean]!) {
 }
 ```
 
-However, a nullable list cannot be passed to a non-null list:
+然而，一个可空列表不能传入一个非空列表：
 
 ```!graphql
 query listToNonNullList($booleanList: [Boolean]) {
@@ -1826,6 +1709,6 @@ query listToNonNullList($booleanList: [Boolean]) {
 }
 ```
 
-This would fail validation because a `[T]` cannot be passed to a `[T]!`.
+这个的验证会失败，因为`[T]`不能传递给`[T]!`。
 
-Similarly a `[T]` cannot be passed to a `[T!]`.
+类似的，`[T]`也不能传递给`[T!]`。
