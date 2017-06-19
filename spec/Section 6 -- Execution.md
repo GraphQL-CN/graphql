@@ -1,176 +1,129 @@
 # Execution/执行
 
-GraphQL generates a response from a request via execution.
+GraphQL通过执行来从请求生成响应。
 
-A request for execution consists of a few pieces of information:
+一个用于执行的请求包含以信息的一部分：
 
-* The schema to use, typically solely provided by the GraphQL service.
-* A Document containing GraphQL Operations and Fragments to execute.
-* Optionally: The name of the Operation in the Document to execute.
-* Optionally: Values for any Variables defined by the Operation.
-* An initial value corresponding to the root type being executed.
-  Conceptually, an initial value represents the "universe" of data available via
-  a GraphQL Service. It is common for a GraphQL Service to always use the same
-  initial value for every request.
+* 要用的schema，典型情况下由GraphQL服务单独提供。
+* 包含操作和片段的文档。
+* 可选：要执行的操作名。
+* 可选：操作定义的变量所需的值。
+* 一个执行期对应于根级类型的初始值。
+概念上而言，初始值代表GraphQL服务下可用的数据的“宇宙”。对于一个GraphQL服务而言，通常执行每个请求都会使用相同初始值。
 
-Given this information, the result of {ExecuteRequest()} produces the response,
-to be formatted according to the Response section below.
-
+有了这些信息，{ExecuteRequest()}的结果就能生成响应，然后按照下述响应一节来格式化。
 
 ## Executing Requests/执行请求
 
-To execute a request, the executor must have a parsed `Document` (as defined
-in the “Query Language” part of this spec) and a selected operation name to
-run if the document defines multiple operations, otherwise the document is
-expected to only contain a single operation. The result of the request is
-determined by the result of executing this operation according to the "Executing
-Operations” section below.
+要执行请求，执行器必须有一个解析过的`Document`/文档（本规范的“Query Language”部分有定义过），如果文档中定义了多个操作还需要有选择的操作名，不然文档将被视为只包含一个操作。请求的结果取决于其操作根据下文“Executing Operations”一节执行的结果。
 
-ExecuteRequest(schema, document, operationName, variableValues, initialValue):
+ExecuteRequest(schema, document, operationName, variableValues, initialValue)：
 
-  * Let {operation} be the result of {GetOperation(document, operationName)}.
-  * Let {coercedVariableValues} be the result of {CoerceVariableValues(schema, operation, variableValues)}.
-  * If {operation} is a query operation:
-    * Return {ExecuteQuery(operation, schema, coercedVariableValues, initialValue)}.
-  * Otherwise if {operation} is a mutation operation:
-    * Return {ExecuteMutation(operation, schema, coercedVariableValues, initialValue)}.
-  * Otherwise if {operation} is a subscription operation:
-    * Return {Subscribe(operation, schema, coercedVariableValues, initialValue)}.
+  * 使{operation}为{GetOperation(document, operationName)}的结果。
+  * 使{coercedVariableValues}为{CoerceVariableValues(schema, operation, variableValues)}的结果。
+  * 如果{operation}是一个查询操作：
+    * 返回{ExecuteQuery(operation, schema, coercedVariableValues, initialValue)}。
+  * 或者如果{operation}是一个更改操作：
+    * 返回{ExecuteMutation(operation, schema, coercedVariableValues, initialValue)}。
+  * 或者如果{operation}是一个订阅操作：
+    * 返回{Subscribe(operation, schema, coercedVariableValues, initialValue)}。
 
-GetOperation(document, operationName):
+GetOperation(document, operationName)：
 
-  * If {operationName} is {null}:
-    * If {document} contains exactly one operation.
-      * Return the Operation contained in the {document}.
-    * Otherwise produce a query error requiring {operationName}.
-  * Otherwise:
-    * Let {operation} be the Operation named {operationName} in {document}.
-    * If {operation} was not found, produce a query error.
-    * Return {operation}.
+  * 如果{operationName}是{null}：
+    * 如果{document}只包含一个操作。
+      * 返回{document}中包含的操作。
+    * 否则产生一个要求{operationName}的错误。
+  * 否则：
+    * 使{operation}为{document}中名为{operationName}的操作。
+    * 如果{operation}未找到，产生一个查询错误。
+    * 返回{operation}。
 
 
 ### Validating Requests/验证请求
 
-As explained in the Validation section, only requests which pass all validation
-rules should be executed. If validation errors are known, they should be
-reported in the list of "errors" in the response and the request must fail
-without execution.
+如同验证章节中解释的一样，只有通过了所有验证的请求才应该被执行。如果得到了验证错误，它们将被添加到响应中的"errors"列表中，而这个请求也就不执行直接失败。
 
-Typically validation is performed in the context of a request immediately
-before execution, however a GraphQL service may execute a request without
-immediately validating it if that exact same request is known to have been
-validated before. A GraphQL service should only execute requests which *at some
-point* were known to be free of any validation errors, and have since
-not changed.
+典型的情况下，验证将在请求执行之前的上下文内瞬间完成，但是在一个相同请求之前已经验证过的情况下，GraphQL服务可能直接执行而不验证。GraphQL服务只应该执行那些*某个时间点*上没有验证错误也没更改过的请求。
 
-For example: the request may be validated during development, provided it does
-not later change, or a service may validate a request once and memoize the
-result to avoid validating the same request again in the future.
+例如：一个请求在开发期已经通过验证，并假设他后面不会改变，或者服务器层验证了一个请求，记住了它的验证结果以避免后续再次验证同样的请求。
 
 
 ### Coercing Variable Values/转换变量值
 
-If the operation has defined any variables, then the values for
-those variables need to be coerced using the input coercion rules
-of variable's declared type. If a query error is encountered during
-input coercion of variable values, then the operation fails without
-execution.
+如果操作定义了任何变量，然后这些变量的值需要根据变量声明的类型的输入转换规则而转换。如果变量值的输入转换中发生了查询错误，操作会不执行直接失败。
 
-CoerceVariableValues(schema, operation, variableValues):
+CoerceVariableValues(schema, operation, variableValues)：
 
-  * Let {coercedValues} be an empty unordered Map.
-  * Let {variableDefinitions} be the variables defined by {operation}.
-  * For each {variableDefinition} in {variableDefinitions}:
-    * Let {variableName} be the name of {variableDefinition}.
-    * Let {variableType} be the expected type of {variableDefinition}.
-    * Let {defaultValue} be the default value for {variableDefinition}.
-    * Let {value} be the value provided in {variableValues} for the name {variableName}.
-    * If {value} does not exist (was not provided in {variableValues}):
-      * If {defaultValue} exists (including {null}):
-        * Add an entry to {coercedValues} named {variableName} with the
-          value {defaultValue}.
-      * Otherwise if {variableType} is a Non-Nullable type, throw a query error.
-      * Otherwise, continue to the next variable definition.
-    * Otherwise, if {value} cannot be coerced according to the input coercion
-      rules of {variableType}, throw a query error.
-    * Let {coercedValue} be the result of coercing {value} according to the
-      input coercion rules of {variableType}.
-    * Add an entry to {coercedValues} named {variableName} with the
-      value {coercedValue}.
-  * Return {coercedValues}.
+  * 使{coercedValues}为一个空的无序Map/映射集。
+  * 使{variableDefinitions}为{operation}定义的变量。
+  * 对于{variableDefinitions}中的每一个{variableDefinition}：
+    * 使{variableName}为{variableDefinition}的名字。
+    * 使{variableType}为{variableDefinition}的期望类型。
+    * 使{defaultValue}为{variableDefinition}的默认值。
+    * 使{value}为{variableValues}中给名为{variableName}的变量提供的值。
+    * 如果{value}并不存在({variableValues}中并未提供)：
+      * 如果{defaultValue}存在(包括{null})：
+        * 给{coercedValues}添加一个名为{variableName}值为{defaultValue}的条目。
+      * 或者如果{variableType}是一个Non-Nullable/非空类型，抛出一个查询错误。
+      * 否则，继续处理下一个变量定义。
+    * 或者, 如果{value}无法根据{variableType}的输入转换规则转换，抛出一个查询错误。
+    * 使{coercedValue}为根据{variableType}的输入转换规则转换的结果。
+    * 给{coercedValues}添加一个名为{variableName}值为{coercedValue}的条目。
+  * 返回{coercedValues}。
 
-Note: This algorithm is very similar to {CoerceArgumentValues()}.
+Note: 这个算法和{CoerceArgumentValues()}的很相似。
 
 
 ## Executing Operations/执行操作
 
-The type system, as described in the “Type System” section of the spec, must
-provide a query root object type. If mutations or subscriptions are supported,
-it must also provide a mutation or subscription root object type, respectively.
+如果本规范的“Type System”/类型系统一章节所描述，类型系统必须提供一个查询的根级对象类型。如果支持更改或者订阅，它也必须提供更改或者订阅对应的根级对象类型。
 
 ### Query/查询
 
-If the operation is a query, the result of the operation is the result of
-executing the query’s top level selection set with the query root object type.
+如果操作是一个查询，那操作的结果就是用查询根级对象类型执行查询的顶层选择集的结果。
 
-An initial value may be provided when executing a query.
+执行一个查询的时候可以提供一个初始值。
 
-ExecuteQuery(query, schema, variableValues, initialValue):
+ExecuteQuery(query, schema, variableValues, initialValue)：
 
-  * Let {queryType} be the root Query type in {schema}.
-  * Assert: {queryType} is an Object type.
-  * Let {selectionSet} be the top level Selection Set in {query}.
-  * Let {data} be the result of running
-    {ExecuteSelectionSet(selectionSet, queryType, initialValue, variableValues)}
-    *normally* (allowing parallelization).
-  * Let {errors} be any *field errors* produced while executing the
-    selection set.
-  * Return an unordered map containing {data} and {errors}.
+  * 使{queryType}为{schema}中的根级查询类型。
+  * 断言：{queryType}是一个对象类型。
+  * 使{selectionSet}为{query}中的顶层选择集。
+  * 使{data}为*正常*执行{ExecuteSelectionSet(selectionSet, queryType, initialValue, variableValues)}的结果(允许并行)。
+  * 使{errors}为执行选择集期间产生的任何*字段错误*。
+  * 返回一个包含{data}和{errors}的无序映射集。
 
 ### Mutation/更改
 
-If the operation is a mutation, the result of the operation is the result of
-executing the mutation’s top level selection set on the mutation root
-object type. This selection set should be executed serially.
+如果操作是一个更改，那操作的结果就是用更改根级对象类型执行更改的顶层选择集的结果。这个选择集应该依次执行。
 
-It is expected that the top level fields in a mutation operation perform
-side-effects on the underlying data system. Serial execution of the provided
-mutations ensures against race conditions during these side-effects.
+更改的顶层字段被期望用于在下层数据系统上执行副作用操作。依次执行这些更改，以保证副作用操作期间没有竞态条件。
 
-ExecuteMutation(mutation, schema, variableValues, initialValue):
+ExecuteMutation(mutation, schema, variableValues, initialValue)：
 
-  * Let {mutationType} be the root Mutation type in {schema}.
-  * Assert: {mutationType} is an Object type.
-  * Let {selectionSet} be the top level Selection Set in {mutation}.
-  * Let {data} be the result of running
-    {ExecuteSelectionSet(selectionSet, mutationType, initialValue, variableValues)}
-    *serially*.
-  * Let {errors} be any *field errors* produced while executing the
-    selection set.
-  * Return an unordered map containing {data} and {errors}.
+  * 使{mutationType}为{schema}的根级更改类型。
+  * 断言：{mutationType}是一个对象类型。
+  * 使{selectionSet}为{mutation}中的顶层选择集。
+  * 使{data}为*依次*执行{ExecuteSelectionSet(selectionSet, mutationType, initialValue, variableValues)}的结果
+  * 使{errors}为执行选择集期间产生的任何*字段错误*。
+  * 返回一个包含{data}和{errors}的无序映射集。
 
 ### Subscription/订阅
 
-If the operation is a subscription, the result is an event stream called the
-"Response Stream" where each event in the event stream is the result of
-executing the operation for each new event on an underlying "Source Stream".
+如果操作是一个订阅，那结果是一个事件流，称作"Response Stream"响应流，事件流中的每一个事件即是针对下层"Source Stream"源流上的新事件执行操作的结果。
 
-Executing a subscription creates a persistent function on the server that
-maps an underlying Source Stream to a returned Response Stream.
+执行订阅会在服务端创建一个永久的函数，用于将下层源流映射成返回的响应流。
 
-Subscribe(subscription, schema, variableValues, initialValue):
+Subscribe(subscription, schema, variableValues, initialValue)：
 
-  * Let {sourceStream} be the result of running {CreateSourceEventStream(subscription, schema, variableValues, initialValue)}.
-  * Let {responseStream} be the result of running {MapSourceToResponseEvent(sourceStream, subscription, schema, variableValues)}
-  * Return {responseStream}.
+  * 使{sourceStream}为{CreateSourceEventStream(subscription, schema, variableValues, initialValue)}执行的结果。
+  * 使{responseStream}为{MapSourceToResponseEvent(sourceStream, subscription, schema, variableValues)}执行的结果。
+  * 返回{responseStream}。
 
-Note: In large scale subscription systems, the {Subscribe()} and
-{ExecuteSubscriptionEvent()} algorithms may be run on separate services to
-maintain predictable scaling properties. See the section below on Supporting
-Subscriptions at Scale.
+Note: 在大型订阅系统中，{Subscribe()}和{ExecuteSubscriptionEvent()}算法可能运行在分离的服务器上，以保持可预测的规模属性。可在下文章节中看到关于支持大规模订阅的内容。
 
-As an example, consider a chat application. To subscribe to new messages posted
-to the chat room, the client sends a request like so:
+考虑一个聊天应用案例。客户端发送一个如下请求来订阅投递到聊天室的新消息：
 
 ```GraphQL
 subscription NewMessages {
@@ -181,9 +134,7 @@ subscription NewMessages {
 }
 ```
 
-While the client is subscribed, whenever new messages are posted to chat room
-with ID "123", the selection for "sender" and "text" will be evaluated and
-published to the client, for example:
+当客户端订阅后，任何时候有ID为"123"的新消息投递到聊天室后，对于"sender"和"text"的选择将会被执行然后发布到客户端。例如：
 
 ```json
 {
@@ -196,136 +147,97 @@ published to the client, for example:
 }
 ```
 
-The "new message posted to chat room" could use a "Pub-Sub" system where the
-chat room ID is the "topic" and each "publish" contains the sender and text.
+"新消息投递到聊天室"可以使用了"Pub-Sub"发布订阅系统，其中聊天室ID是"topic"，并且每一个"publish"都包含了"sender"发送者和"text"文本。
 
 **Event Streams**
 
-An event stream represents a sequence of discrete events over time which can be
-observed. As an example, a "Pub-Sub" system may produce an event stream when
-"subscribing to a topic", with an event occurring on that event stream for each
-"publish" to that topic. Event streams may produce an infinite sequence of
-events or may complete at any point. Event streams may complete in response to
-an error or simply because no more events will occur. An observer may at any
-point decide to stop observing an event stream by cancelling it, after which it
-must receive no more events from that event stream.
+事件流表示一序列可观测的离散事件。例如，一个"Pub-Sub"系统当"subscribing to a topic"订阅了一个话题可能产生一个事件流，每一次"publish"发布到话题都会在事件流上产生一个事件。事件流可能产生一序列无尽的事件，也可能在任何时候终止。响应中的事件流可能因为发生错误而终止，也可能仅仅因为没有后续事件发生。观察者可以在任何时候取消订阅而停止观察事件流，这之后就不会从事件流中收到后续事件了。
 
-**Supporting Subscriptions at Scale**
+**Supporting Subscriptions at Scale/支持大规模订阅**
 
-Supporting subscriptions is a significant change for any GraphQL server. Query
-and mutation operations are stateless, allowing scaling via cloning of GraphQL
-server instances. Subscriptions, by contrast, are stateful and require
-maintaining the GraphQL document, variables, and other context over the lifetime
-of the subscription.
+支持订阅对GraphQL服务器而言是一个显著的变化。查询和更改操作是无状态的，可以通过克隆GraphQL服务器实例而扩展规模。订阅却相反，它是有状态的，要求在这个订阅的生命周期内维持文档、变量和其他上下文。
 
-Consider the behavior of your system when state is lost due to the failure of a
-single machine in a service. Durability and availability may be improved by
-having separate dedicated services for managing subscription state and client
-connectivity.
+考虑下你服务中某个机器宕机状态丢失的时候，你的系统的行为。使用分离的专用服务器来处理订阅状态和客户端连接将能提升系统的持久性和可用性。
 
 #### Source Stream/源流
 
-A Source Stream represents the sequence of events, each of which will
-trigger a GraphQL execution corresponding to that event. Like field value
-resolution, the logic to create a Source Stream is application-specific.
+源流表示会触发GraphQL对应事件执行的一序列事件。就像字段值的解析一样，创建源流的逻辑也是应用特定的。
 
-CreateSourceEventStream(subscription, schema, variableValues, initialValue):
+CreateSourceEventStream(subscription, schema, variableValues, initialValue)：
 
-  * Let {subscriptionType} be the root Subscription type in {schema}.
-  * Assert: {subscriptionType} is an Object type.
-  * Let {selectionSet} be the top level Selection Set in {subscription}.
-  * Let {rootField} be the first top level field in {selectionSet}.
-  * Let {argumentValues} be the result of {CoerceArgumentValues(subscriptionType, rootField, variableValues)}.
-  * Let {fieldStream} be the result of running {ResolveFieldEventStream(subscriptionType, initialValue, rootField, argumentValues)}.
-  * Return {fieldStream}.
+  * 使{subscriptionType}为{schema}的根级订阅类型。
+  * 断言：{subscriptionType}是一个对象类型。
+  * 使{selectionSet}。
+  * 使{rootField}为{selectionSet}中的第一个顶层字段。
+  * 使{argumentValues}为{CoerceArgumentValues(subscriptionType, rootField, variableValues)}的结果。
+  * 使{fieldStream}为运行{ResolveFieldEventStream(subscriptionType, initialValue, rootField, argumentValues)}的结果。
+  * 返回{fieldStream}。
 
-ResolveFieldEventStream(subscriptionType, rootValue, fieldName, argumentValues):
-  * Let {resolver} be the internal function provided by {subscriptionType} for
-    determining the resolved event stream of a subscription field named {fieldName}.
-  * Return the result of calling {resolver}, providing {rootValue} and {argumentValues}.
+ResolveFieldEventStream(subscriptionType, rootValue, fieldName, argumentValues)：
+  * 使{resolver}为{subscriptionType}提供的内部函数，用于解析名为{fieldName}的订阅字段的事件流。
+  * 返回使用{rootValue}和{argumentValues}调用{resolver}的结果。
 
-Note: This {ResolveFieldEventStream()} algorithm is intentionally similar
-to {ResolveFieldValue()} to enable consistency when defining resolvers
-on any operation type.
+Note: 这个{ResolveFieldEventStream()}算法有意与{ResolveFieldValue()}相似，以保证给任何操作类型定义解析函数时的一致性。
 
 #### Response Stream/响应流
 
-Each event in the underlying Source Stream triggers execution of the subscription
-selection set using that event as a root value.
+下层源流中的每一个事件都会触发订阅使用这个事件作为根值执行选择集。
 
-MapSourceToResponseEvent(sourceStream, subscription, schema, variableValues):
+MapSourceToResponseEvent(sourceStream, subscription, schema, variableValues)：
 
-  * Return a new event stream {responseStream} which yields events as follows:
-  * For each {event} on {sourceStream}:
-    * Let {response} be the result of running
-      {ExecuteSubscriptionEvent(subscription, schema, variableValues, event)}.
-    * Yield an event containing {response}.
-  * When {responseStream} completes: complete this event stream.
+  * 返回产生如下事件的事件流{responseStream}：
+  * 对于{sourceStream}上的每一个{event}：
+    * 使{response}为运行{ExecuteSubscriptionEvent(subscription, schema, variableValues, event)}的结果。
+    * 产生包含{response}的事件。
+  * 当{responseStream}完成的时候：终止这个事件流。
 
-ExecuteSubscriptionEvent(subscription, schema, variableValues, initialValue):
+ExecuteSubscriptionEvent(subscription, schema, variableValues, initialValue)：
 
-  * Let {subscriptionType} be the root Subscription type in {schema}.
-  * Assert: {subscriptionType} is an Object type.
-  * Let {selectionSet} be the top level Selection Set in {subscription}.
-  * Let {data} be the result of running
-    {ExecuteSelectionSet(selectionSet, subscriptionType, initialValue, variableValues)}
-    *normally* (allowing parallelization).
-  * Let {errors} be any *field errors* produced while executing the
-    selection set.
-  * Return an unordered map containing {data} and {errors}.
+  * 使{subscriptionType}为为{schema}的根级订阅类型。
+  * 断言：{subscriptionType}是一个对象类型。
+  * 使{selectionSet}为{subscription}中的顶层选择集。
+  * 使{data}为*正常*执行的结果{ExecuteSelectionSet(selectionSet, subscriptionType, initialValue, variableValues)}（允许并行）。
+  * 使{errors}为执行选择集期间产生的任何*字段错误*。
+  * 返回一个包含{data}和{errors}的无序映射集。
 
-Note: The {ExecuteSubscriptionEvent()} algorithm is intentionally similar to
-{ExecuteQuery()} since this is how the each event result is produced.
+Note: 这个{ExecuteSubscriptionEvent()}算法有意与{ExecuteQuery()}相似，因为这便是每个事件结果如何产生的。
 
 #### Unsubscribe/退订
 
-Unsubscribe cancels the Response Stream when a client no longer wishes to receive
-payloads for a subscription. This may in turn also cancel the Source Stream.
-This is also a good opportunity to clean up any other resources used by
-the subscription.
+当客户端不再想要收到订阅的载荷时可以通过退订来取消响应流。这可能也同时取消掉了源流。这个是一个清理被这个订阅占用的其他资源的好机会。
 
 Unsubscribe(responseStream)
 
-  * Cancel {responseStream}
+  * 取消{responseStream}
 
 ## Executing Selection Sets/执行选择集
 
-To execute a selection set, the object value being evaluated and the object type
-need to be known, as well as whether it must be executed serially, or may be
-executed in parallel.
+要执行选择集，对象值必须得到，对象类型必须已知，同样还需要知道其需要依次执行还是并列执行。
 
-First, the selection set is turned into a grouped field set; then, each
-represented field in the grouped field set produces an entry into a
-response map.
+首先，选择集被转换成分组的字段集合，然后分组字段集合内的每一个字段都会在响应映射集中产生一个条目。
 
-ExecuteSelectionSet(selectionSet, objectType, objectValue, variableValues):
+ExecuteSelectionSet(selectionSet, objectType, objectValue, variableValues)：
 
-  * Let {groupedFieldSet} be the result of
-    {CollectFields(objectType, selectionSet, variableValues)}.
-  * Initialize {resultMap} to an empty ordered map.
-  * For each {groupedFieldSet} as {responseKey} and {fields}:
-    * Let {fieldName} be the name of the first entry in {fields}.
-      Note: This value is unaffected if an alias is used.
-    * Let {fieldType} be the return type defined for the field {fieldName} of {objectType}.
-    * If {fieldType} is {null}:
-      * Continue to the next iteration of {groupedFieldSet}.
-    * Let {responseValue} be {ExecuteField(objectType, objectValue, fields, fieldType, variableValues)}.
-    * Set {responseValue} as the value for {responseKey} in {resultMap}.
-  * Return {resultMap}.
+  * 使{groupedFieldSet}为{CollectFields(objectType, selectionSet, variableValues)}的结果。
+  * 初始化{resultMap}进一个空有序映射集。
+  * 对于作为{responseKey}和{fields}的每一个{groupedFieldSet}：
+    * 使{fieldName}为{fields}中第一个条目的名字。
+      Note: 值并不会因引入别名而受影响。
+    * 使{fieldType}为{objectType}的{fieldName}定义的的返回类型。
+    * 如果{fieldType}是{null}：
+      * 继续下一轮{groupedFieldSet}的迭代。
+    * 使{responseValue}为{ExecuteField(objectType, objectValue, fields, fieldType, variableValues)}。
+    * 将{responseValue}设为{responseKey}中{resultMap}的值。
+  * 返回{resultMap}。
 
-Note: {resultMap} is ordered by which fields appear first in the query. This
-is explained in greater detail in the Field Collection section below.
+Note: {resultMap}依照出现在query中的顺序排序。这在下列字段集合一节中有更详细的介绍。
 
 
 ### Normal and Serial Execution/正常序列执行
 
-Normally the executor can execute the entries in a grouped field set in whatever
-order it chooses (often in parallel). Because the resolution of fields other
-than top-level mutation fields must always be side effect-free and idempotent,
-the execution order must not affect the result, and hence the server has the
-freedom to execute the field entries in whatever order it deems optimal.
+正常情况下，不论分组字段集合中的条目顺序为何，执行器都能执行（通常是并行执行）。因为除了顶层更改必然有副作用且具有幂等性，字段解析的执行顺序必然不会影响其结果，因此服务器能够以他认为优化的方式自由地执行字段条目。
 
-For example, given the following grouped field set to be executed normally:
+例如，有下正常执行的分组字段：
 
 ```GraphQL
 {
@@ -338,19 +250,13 @@ For example, given the following grouped field set to be executed normally:
 }
 ```
 
-A valid GraphQL executor can resolve the four fields in whatever order it
-chose (however of course `birthday` must be resolved before `month`, and
-`address` before `street`).
+一个有效的GraphQL执行器可以以任何他选择的顺序来解析这四个字段（然而，`birthday`必然在`month`之前，同理`address`在`street`之前）。
 
-When executing a mutation, the selections in the top most selection set will be
-executed in serial order.
+当执行更改时，最顶层的选择集会依序执行。
 
-When executing a grouped field set serially, the executor must consider each entry
-from the grouped field set in the order provided in the grouped field set. It must
-determine the corresponding entry in the result map for each item to completion
-before it continues on to the next item in the grouped field set:
+当依序执行一个分组字段集的时候，执行器必须以每个条目出现在分组字段集中的顺序来决定在结果映射集对应的条目，使得分组映射集中每一个条目完成之后才继续下一个条目。
 
-For example, given the following selection set to be executed serially:
+例如，有以依序执行的选择集：
 
 ```GraphQL
 {
@@ -363,16 +269,12 @@ For example, given the following selection set to be executed serially:
 }
 ```
 
-The executor must, in serial:
+执行器必须依序执行：
 
- - Run {ExecuteField()} for `changeBirthday`, which during {CompleteValue()}
-   will execute the `{ month }` sub-selection set normally.
- - Run {ExecuteField()} for `changeAddress`, which during {CompleteValue()}
-   will execute the `{ street }` sub-selection set normally.
+ - 执行`changeBirthday`的{ExecuteField()}，其中{CompleteValue()}期间，会正常执行`{ month }`次级选择集。
+ - 执行`changeAddress`的{ExecuteField()}，其中{CompleteValue()}期间，会正常执行`{ street }`次级选择集。
 
-As an illustrative example, let's assume we have a mutation field
-`changeTheNumber` that returns an object containing one field,
-`theNumber`. If we execute the following selection set serially:
+举一个说明性的例子，假设我们有一个mutation字段`changeTheNumber`，其返回包含一个`theNumber`字段的对象。如果我们依序执行下列选择集：
 
 ```GraphQL
 {
@@ -388,16 +290,16 @@ As an illustrative example, let's assume we have a mutation field
 }
 ```
 
-The executor will execute the following serially:
+执行器会如下依序执行：
 
- - Resolve the `changeTheNumber(newNumber: 1)` field
- - Execute the `{ theNumber }` sub-selection set of `first` normally
- - Resolve the `changeTheNumber(newNumber: 3)` field
- - Execute the `{ theNumber }` sub-selection set of `second` normally
- - Resolve the `changeTheNumber(newNumber: 2)` field
- - Execute the `{ theNumber }` sub-selection set of `third` normally
+ - 解析`changeTheNumber(newNumber: 1)`字段
+ - 正常执行`first`次级选择集`{ theNumber }`
+ - 解析`changeTheNumber(newNumber: 3)`字段
+ - 正常执行`second`次级选择集`{ theNumber }`
+ - 解析`changeTheNumber(newNumber: 2)`字段
+ - 正常执行`third`次级选择集`{ theNumber }`
 
-A correct executor must generate the following result for that selection set:
+正确的执行器，对于上述选择集必然会生成如下结果：
 
 ```json
 {
@@ -416,14 +318,9 @@ A correct executor must generate the following result for that selection set:
 
 ### Field Collection/字段集合
 
-Before execution, the selection set is converted to a grouped field set by
-calling {CollectFields()}. Each entry in the grouped field set is a list of
-fields that share a response key. This ensures all fields with the same response
-key (alias or field name) included via referenced fragments are executed at the
-same time.
+执行之前，通过调用{CollectFields()}，选择集会被转换成分组字段集。分组字段集中的每一个条目都是共享同一个响应键的列表。这保证了同一个响应键（别名或者字段名）内所有的字段，包含通过片段引入的，都能同时执行。
 
-As an example, collecting the fields of this selection set would collect two
-instances of the field `a` and one of field `b`:
+如果，手机如下选择集的字段会收集到两个`a`字段的实体和一个`b`字段的实体：
 
 ```GraphQL
 {
@@ -441,213 +338,157 @@ fragment ExampleFragment on Query {
 }
 ```
 
-The depth-first-search order of the field groups produced by {CollectFields()}
-is maintained through execution, ensuring that fields appear in the executed
-response in a stable and predictable order.
+{CollectFields()}生成的字段分组的深度优先搜索通过执行来保持，保证字段在执行后响应中以稳定可预测的顺序出现。
 
-CollectFields(objectType, selectionSet, variableValues, visitedFragments):
+CollectFields(objectType, selectionSet, variableValues, visitedFragments)：
 
-  * If {visitedFragments} if not provided, initialize it to the empty set.
-  * Initialize {groupedFields} to an empty ordered map of lists.
-  * For each {selection} in {selectionSet}:
-    * If {selection} provides the directive `@skip`, let {skipDirective} be that directive.
-      * If {skipDirective}'s {if} argument is {true} or is a variable in {variableValues} with the value {true}, continue with the next
-      {selection} in {selectionSet}.
-    * If {selection} provides the directive `@include`, let {includeDirective} be that directive.
-      * If {includeDirective}'s {if} argument is not {true} and is not a variable in {variableValues} with the value {true}, continue with the next
-      {selection} in {selectionSet}.
-    * If {selection} is a {Field}:
-      * Let {responseKey} be the response key of {selection}.
-      * Let {groupForResponseKey} be the list in {groupedFields} for
-        {responseKey}; if no such list exists, create it as an empty list.
-      * Append {selection} to the {groupForResponseKey}.
-    * If {selection} is a {FragmentSpread}:
-      * Let {fragmentSpreadName} be the name of {selection}.
-      * If {fragmentSpreadName} is in {visitedFragments}, continue with the
-        next {selection} in {selectionSet}.
-      * Add {fragmentSpreadName} to {visitedFragments}.
-      * Let {fragment} be the Fragment in the current Document whose name is
-        {fragmentSpreadName}.
-      * If no such {fragment} exists, continue with the next {selection} in
-        {selectionSet}.
-      * Let {fragmentType} be the type condition on {fragment}.
-      * If {DoesFragmentTypeApply(objectType, fragmentType)} is false, continue
-        with the next {selection} in {selectionSet}.
-      * Let {fragmentSelectionSet} be the top-level selection set of {fragment}.
-      * Let {fragmentGroupedFieldSet} be the result of calling
-        {CollectFields(objectType, fragmentSelectionSet, visitedFragments)}.
-      * For each {fragmentGroup} in {fragmentGroupedFieldSet}:
-        * Let {responseKey} be the response key shared by all fields in {fragmentGroup}
-        * Let {groupForResponseKey} be the list in {groupedFields} for
-          {responseKey}; if no such list exists, create it as an empty list.
-        * Append all items in {fragmentGroup} to {groupForResponseKey}.
-    * If {selection} is an {InlineFragment}:
-      * Let {fragmentType} be the type condition on {selection}.
-      * If {fragmentType} is not {null} and {DoesFragmentTypeApply(objectType, fragmentType)} is false, continue
-        with the next {selection} in {selectionSet}.
-      * Let {fragmentSelectionSet} be the top-level selection set of {selection}.
-      * Let {fragmentGroupedFieldSet} be the result of calling {CollectFields(objectType, fragmentSelectionSet, variableValues, visitedFragments)}.
-      * For each {fragmentGroup} in {fragmentGroupedFieldSet}:
-        * Let {responseKey} be the response key shared by all fields in {fragmentGroup}
-        * Let {groupForResponseKey} be the list in {groupedFields} for
-          {responseKey}; if no such list exists, create it as an empty list.
-        * Append all items in {fragmentGroup} to {groupForResponseKey}.
-  * Return {groupedFields}.
+  * 如果未提供{visitedFragments}，将其初始化为空集。
+  * 初始化{groupedFields}为列表的空的有序集。
+  * 对于{selectionSet}中的每一个{selection}：
+    * 如果{selection}提供了`@skip`指令，使{skipDirective}为此指令。
+      * 如果{skipDirective}的{if}参数是{true}或者是{variableValues}中的一个为{true}的变量，则继续{selectionSet}中的下一个{selection}。
+    * 如果{selection}提供了`@include`指令，使{includeDirective}为此指令。
+      * 如果{includeDirective}参数不是{true}或者不是{variableValues}中的一个为{true}的变量，则继续{selectionSet}中的下一个{selection}。
+    * 如果{selection}是一个{Field}：
+      * 使{responseKey}为{selection}中的响应键。
+      * 使{groupForResponseKey}为{groupedFields}中的一个{responseKey}列表；如果不存在这么一个列表，则创建一个空列表。
+      * 附加{selection}到{groupForResponseKey}上。
+    * 如果{selection}是一个{FragmentSpread}：
+      * 使{fragmentSpreadName}为{selection}的名字。
+      * 如果{fragmentSpreadName}在{visitedFragments}中，则继续{selectionSet}中的下一个{selection}。
+      * 添加{fragmentSpreadName}到{visitedFragments}上。
+      * 使{fragment}为当前文档中名为{fragmentSpreadName}的片段。
+      * 如果不存在那样的{fragment}，则继续{selectionSet}中的下一个{selection}。
+      * 使{fragmentType}为{fragment}上的类型条件。
+      * 如果{DoesFragmentTypeApply(objectType, fragmentType)}为false，则继续{selectionSet}中的下一个{selection}。
+      * 使{fragmentSelectionSet}为{fragment}的顶层选择集。
+      * 使{fragmentGroupedFieldSet}为调用{CollectFields(objectType, fragmentSelectionSet, visitedFragments)}的结果。
+      * 对于{fragmentGroupedFieldSet}中的每一个{fragmentGroup}：
+        * 使{responseKey}为{fragmentGroup}中所有字段共享的响应键。
+        * 使{groupForResponseKey}为{groupedFields}中的{responseKey}列表；如果不存在这么一个列表，则创建一个空列表。
+        * 附加{fragmentGroup}中所有的元素到{groupForResponseKey}上。
+    * 如果{selection}是一个{InlineFragment}：
+      * 使{fragmentType}为{selection}上的类型条件。
+      * 如果{fragmentType}不为{null}且{DoesFragmentTypeApply(objectType, fragmentType)}是false，则继续{selectionSet}中的下一个{selection}。
+      * 使{fragmentSelectionSet}为{selection}的顶层选择集。
+      * 使{fragmentGroupedFieldSet}为调用{CollectFields(objectType, fragmentSelectionSet, variableValues, visitedFragments)}的结果。
+      * 对于{fragmentGroupedFieldSet}中的每一个{fragmentGroup}：
+        * 使{responseKey}为为{fragmentGroup}中所有字段共享的响应键
+        * 使{groupForResponseKey}为{groupedFields}中的{responseKey}列表；如果不存在这么一个列表，则创建一个空列表。
+                  * 附加{fragmentGroup}中所有的元素到{groupForResponseKey}上。
+  * 返回{groupedFields}。
 
-DoesFragmentTypeApply(objectType, fragmentType):
+DoesFragmentTypeApply(objectType, fragmentType)：
 
-  * If {fragmentType} is an Object Type:
-    * if {objectType} and {fragmentType} are the same type, return {true}, otherwise return {false}.
-  * If {fragmentType} is an Interface Type:
-    * if {objectType} is an implementation of {fragmentType}, return {true} otherwise return {false}.
-  * If {fragmentType} is a Union:
-    * if {objectType} is a possible type of {fragmentType}, return {true} otherwise return {false}.
+  * 如果{fragmentType}是一个对象类型：
+    * 如果{objectType}和{fragmentType}是同类型，返回{true}，否则返回{false}。
+  * 如果{fragmentType}是一个接口类型：
+    * 如果{objectType}是{fragmentType}的一个实现，返回{true}，否则返回{false}。
+  * 如果{fragmentType}是一个联合：
+    * 如果{objectType}是{fragmentType}的一个可能类型，返回{true}，否则返回{false}。
 
 
 ## Executing Fields/执行字段
 
-Each field requested in the grouped field set that is defined on the selected
-objectType will result in an entry in the response map. Field execution first
-coerces any provided argument values, then resolves a value for the field, and
-finally completes that value either by recursively executing another selection
-set or coercing a scalar value.
+分组字段集上的每一个请求字段（定义在被选择的对象类型上）都会得到一个响应映射集中的一个条目。字段执行首先会转换任何提供的技术值，然后解析这个字段的值，最后通过递归执行另一个选择集或者转换一个标量来完成这个字段的值。
 
-ExecuteField(objectType, objectValue, fieldType, fields, variableValues):
-  * Let {field} be the first entry in {fields}.
-  * Let {argumentValues} be the result of {CoerceArgumentValues(objectType, field, variableValues)}
-  * Let {resolvedValue} be {ResolveFieldValue(objectType, objectValue, fieldName, argumentValues)}.
-  * Return the result of {CompleteValue(fieldType, fields, resolvedValue, variableValues)}.
+ExecuteField(objectType, objectValue, fieldType, fields, variableValues)：
+  * 使{field}为{fields}中的第一个条目。
+  * 使{argumentValues}为{CoerceArgumentValues(objectType, field, variableValues)}的结果
+  * 使{resolvedValue}为{ResolveFieldValue(objectType, objectValue, fieldName, argumentValues)}。
+  * 返回{CompleteValue(fieldType, fields, resolvedValue, variableValues)}的结果。
 
 
 ### Coercing Field Arguments/转换字段参数
 
-Fields may include arguments which are provided to the underlying runtime in
-order to correctly produce a value. These arguments are defined by the field in
-the type system to have a specific input type: Scalars, Enum, Input Object, or
-List or Non-Null wrapped variations of these three.
+字段可能包含下层运行时产生正确结果的参数，这些参数定义在类型系统中的字段上，都有一个特定的输入类型：Scalars标量、Enum庙举行、Input Object输入对象，或者这三个的List列表和Non-Null非空封装。
 
-At each argument position in a query may be a literal value or a variable to be
-provided at runtime.
+对于查询中每个参数的位置，可能是一个字面量值，也可能是运行时提供的变量。
 
-CoerceArgumentValues(objectType, field, variableValues):
-  * Let {coercedValues} be an empty unordered Map.
-  * Let {argumentValues} be the argument values provided in {field}.
-  * Let {fieldName} be the name of {field}.
-  * Let {argumentDefinitions} be the arguments defined by {objectType} for the
-    field named {fieldName}.
-  * For each {argumentDefinition} in {argumentDefinitions}:
-    * Let {argumentName} be the name of {argumentDefinition}.
-    * Let {argumentType} be the expected type of {argumentDefinition}.
-    * Let {defaultValue} be the default value for {argumentDefinition}.
-    * Let {value} be the value provided in {argumentValues} for the name {argumentName}.
-    * If {value} is a Variable:
-      * Let {variableName} be the name of Variable {value}.
-      * Let {variableValue} be the value provided in {variableValues} for the name {variableName}.
-      * If {variableValue} exists (including {null}):
-        * Add an entry to {coercedValues} named {argName} with the
-          value {variableValue}.
-      * Otherwise, if {defaultValue} exists (including {null}):
-        * Add an entry to {coercedValues} named {argName} with the
-          value {defaultValue}.
-      * Otherwise, if {argumentType} is a Non-Nullable type, throw a field error.
-      * Otherwise, continue to the next argument definition.
-    * Otherwise, if {value} does not exist (was not provided in {argumentValues}:
-      * If {defaultValue} exists (including {null}):
-        * Add an entry to {coercedValues} named {argName} with the
-          value {defaultValue}.
-      * Otherwise, if {argumentType} is a Non-Nullable type, throw a field error.
-      * Otherwise, continue to the next argument definition.
-    * Otherwise, if {value} cannot be coerced according to the input coercion
-      rules of {argType}, throw a field error.
-    * Let {coercedValue} be the result of coercing {value} according to the
-      input coercion rules of {argType}.
-    * Add an entry to {coercedValues} named {argName} with the
-      value {coercedValue}.
-  * Return {coercedValues}.
+CoerceArgumentValues(objectType, field, variableValues)：
+  * 使{coercedValues}为空的无序映射集。
+  * 使{argumentValues}为{field}提供的参数值。
+  * 使{fieldName}为{field}的名字。
+  * 使{argumentDefinitions}为{objectType}上字段名{fieldName}定义的参数。
+  * 对于{argumentDefinitions}中的每一个{argumentDefinition}：
+    * 使{argumentName}为{argumentDefinition}的名字。
+    * 使{argumentType}为{argumentDefinition}的期待类型。
+    * 使{defaultValue}为{argumentDefinition}的默认值。
+    * 使{value}为{argumentValues}中针对{argumentName}提供的值。
+    * 如果{value}是一个变量：
+      * 使{variableName}为{value}变量的名字。
+      * 使{variableValue}为{variableValues}中针对{variableName}提供的值。
+      * 如果{variableValue}存在(包含{null})：
+        * 添加名为{argName}值为{variableValue}的条目到{coercedValues}。
+      * 否则，如果{defaultValue}存在(包含{null})：
+        * 添加名为{argName}值为{defaultValue}的条目到{coercedValues}。
+      * 否则，如果{argumentType}是一个Non-Nullable非空类型，抛出字段错误。
+      * 否则，继续下一个参数定义。
+    * 否则，如果{value}不存在({argumentValues}中未提供)：
+      * 如果{defaultValue}存在(包含{null})：
+        * 添加名为{argName}值为{defaultValue}的条目到{coercedValues}。
+      * 否则，如果{argumentType}是一个Non-Nullable非空类型，抛出字段错误。
+      * 否则，继续下一个参数定义。
+    * 否则, 如果{value}不能根据{argType}的输入转换规则转换，抛出字段错误。
+    * 使{coercedValue}为根据{argType}的输入转换规则转换{value}的结果。
+    * 添加名为{argName}值为{variableValue}的条目到{coercedValues}。
+  * 返回{coercedValues}。
 
-Note: Variable values are not coerced because they are expected to be coerced
-before executing the operation in {CoerceVariableValues()}, and valid queries
-must only allow usage of variables of appropriate types.
+Note: 变量的值并没有被转换，因为它们应该在执行{CoerceVariableValues()}中的操作前前就被转换，一个有效的查询必须仅允许合适类型的变量。
 
 
 ### Value Resolution/值解析
 
-While nearly all of GraphQL execution can be described generically, ultimately
-the internal system exposing the GraphQL interface must provide values.
-This is exposed via {ResolveFieldValue}, which produces a value for a given
-field on a type for a real value.
+虽然几乎所有的GraphQL执行都能通用化描述，但最终内部系统暴露给GraphQL接口的时候必须提供值。这通过{ResolveFieldValue}暴露，其生成真实值的类型上给定字段的值，
 
-As an example, this might accept the {objectType} `Person`, the {field}
-{"soulMate"}, and the {objectValue} representing John Lennon. It would be
-expected to yield the value representing Yoko Ono.
+在案例中，这个可能接收{objectType}/对象类型`Person`，其{field}/字段为{"soulMate"}，这个{objectValue}/类型值表示John Lennon。它可能被期待得到值表示Yoko Ono。
 
-ResolveFieldValue(objectType, objectValue, fieldName, argumentValues):
-  * Let {resolver} be the internal function provided by {objectType} for
-    determining the resolved value of a field named {fieldName}.
-  * Return the result of calling {resolver}, providing {objectValue} and {argumentValues}.
+ResolveFieldValue(objectType, objectValue, fieldName, argumentValues)：
+  * 使{resolver}为{objectType}提供的内部函数，用以决定名为{fieldName}的字段的解析值。
+  * 返回使用{objectValue}和{argumentValues}调用{resolver}的结果。
 
-Note: It is common for {resolver} to be asynchronous due to relying on reading
-an underlying database or networked service to produce a value. This
-necessitates the rest of a GraphQL executor to handle an asynchronous
-execution flow.
+Note: {resolver}通常可能是异步的，因为其依靠读取下层数据库或者网络服务来产生值。这要求其他的GraphQL执行器能够处理异步执行流。
 
 
 ### Value Completion/值完成
 
-After resolving the value for a field, it is completed by ensuring it adheres
-to the expected return type. If the return type is another Object type, then
-the field execution process continues recursively.
+在解析一个字段的值后，再确认其符合期望返回类型即完成。如果返回值是另一个对象类型，然后字段执行将继续递归。
 
-CompleteValue(fieldType, fields, result, variableValues):
-  * If the {fieldType} is a Non-Null type:
-    * Let {innerType} be the inner type of {fieldType}.
-    * Let {completedResult} be the result of calling
-      {CompleteValue(innerType, fields, result, variableValues)}.
-    * If {completedResult} is {null}, throw a field error.
-    * Return {completedResult}.
-  * If {result} is {null} (or another internal value similar to {null} such as
-    {undefined} or {NaN}), return {null}.
-  * If {fieldType} is a List type:
-    * If {result} is not a collection of values, throw a field error.
-    * Let {innerType} be the inner type of {fieldType}.
-    * Return a list where each list item is the result of calling
-      {CompleteValue(innerType, fields, resultItem, variableValues)}, where
-      {resultItem} is each item in {result}.
-  * If {fieldType} is a Scalar or Enum type:
-    * Return the result of "coercing" {result}, ensuring it is a legal value of
-      {fieldType}, otherwise {null}.
-  * If {fieldType} is an Object, Interface, or Union type:
-    * If {fieldType} is an Object type.
-      * Let {objectType} be {fieldType}.
-    * Otherwise if {fieldType} is an Interface or Union type.
-      * Let {objectType} be ResolveAbstractType({fieldType}, {result}).
-    * Let {subSelectionSet} be the result of calling {MergeSelectionSets(fields)}.
-    * Return the result of evaluating ExecuteSelectionSet(subSelectionSet, objectType, result, variableValues) *normally* (allowing for parallelization).
+CompleteValue(fieldType, fields, result, variableValues)：
+  * 如果{fieldType}是一个Non-Null非空类型：
+    * 使{innerType}为{fieldType}的内部类型。
+    * 使{completedResult}为调用{CompleteValue(innerType, fields, result, variableValues)}的结果。
+    * 如果{completedResult}是{null}，抛出一个字段错误。
+    * 返回{completedResult}。
+  * 如果{result}是{null} (或者另一种类似于的{null}内部值，譬如{undefined}或{NaN}), 返回{null}。
+  * 如果{fieldType}是一个List列表类型：
+    * 如果{result}并不是一个值的集合，抛出一个字段错误。
+    * 使{innerType}为{fieldType}的内部类型。
+    * 返回一个列表，其中每个列表元素都是调用{CompleteValue(innerType, fields, resultItem, variableValues)}的结果，其中{resultItem}为{result}中的每个元素。。
+  * 如果{fieldType}是Scalar标量或者Enum枚举类型：
+    * 返回“转换”{result}的结果，保证其为{fieldType}的合法值，否则为{null}。
+  * 如果{fieldType}是Object对象，Interface接口，或者Union类型：
+    * 如果{fieldType}是一个Object对象类型。
+      * 使{objectType}为{fieldType}。
+    * Otherwise 如果{fieldType}是一个Interface接口，或者Union类型。
+      * 使{objectType}为ResolveAbstractType({fieldType}, {result})。
+    * 使{subSelectionSet}为调用{MergeSelectionSets(fields)}的结果。
+    * 返回ExecuteSelectionSet(subSelectionSet, objectType, result, variableValues)*正常*求值的结果(允许并行)。
 
-**Resolving Abstract Types**
+**Resolving Abstract Types/解析抽象类型**
 
-When completing a field with an abstract return type, that is an Interface or
-Union return type, first the abstract type must be resolved to a relevant Object
-type. This determination is made by the internal system using whatever
-means appropriate.
+当完成一个具有抽象返回类型的字段时，譬如Interface接口或者Union联合返回类型，首先，抽象类型必须接地到一个相关的对象类型上去，这个由内部系统决定哪一个是合适的。
 
-Note: A common method of determining the Object type for an {objectValue} in
-object-oriented environments, such as Java or C#, is to use the class name of
-the {objectValue}.
+Note: 在面向对象的环境中，譬如Java或者C#，用以决定一个{objectValue}的对象类型的通用方法是使用这个{objectValue}的类名。
 
-ResolveAbstractType(abstractType, objectValue):
-  * Return the result of calling the internal method provided by the type
-    system for determining the Object type of {abstractType} given the
-    value {objectValue}.
+ResolveAbstractType(abstractType, objectValue)：
+  * 返回调用系统提供的内部方法的结果，此方法用于决定给定值{objectValue}的{abstractType}的对象类型。
 
-**Merging Selection Sets**
+**Merging Selection Sets/合并选择集**
 
-When more than one fields of the same name are executed in parallel, their
-selection sets are merged together when completing the value in order to
-continue execution of the sub-selection sets.
+当多余一个同名字段并行执行后，他们的选择集在完成这个值的时候被合并，以继续次级选择集的执行。
 
-An example query illustrating parallel fields with the same name with
-sub-selections.
+案例查询中，描述了带次级选择集的同名的并行字段。
 
 ```GraphQL
 {
@@ -660,38 +501,25 @@ sub-selections.
 }
 ```
 
-After resolving the value for `me`, the selection sets are merged together so
-`firstName` and `lastName` can be resolved for one value.
+当解析了 `me`的值后，选择集将合并，所以`firstName`和`lastName`可以被解析到一个值上。
 
-MergeSelectionSets(fields):
-  * Let {selectionSet} be an empty list.
-  * For each {field} in {fields}:
-    * Let {fieldSelectionSet} be the selection set of {field}.
-    * If {fieldSelectionSet} is null or empty, continue to the next field.
-    * Append all selections in {fieldSelectionSet} to {selectionSet}.
-  * Return {selectionSet}.
+MergeSelectionSets(fields)：
+  * 使{selectionSet}为一个空列表。
+  * 对于 {fields}中的每一个{field}：
+    * 使{fieldSelectionSet}为{field}的选择集。
+    * 如果{fieldSelectionSet}是null或者empty，继续下一个字段。
+    * 将{fieldSelectionSet}中所有的选择集添加到{selectionSet}。
+  * 返回{selectionSet}。
 
 
 ### Errors and Non-Nullability/错误与非空
 
-If an error is thrown while resolving a field, it should be treated as though
-the field returned {null}, and an error must be added to the {"errors"} list
-in the response.
+当解析一个字段时抛出了错误，它应该被当作这个字段返回了{null}，且错误必须添加到响应的{"errors"}列表中。
 
-If the result of resolving a field is {null} (either because the function to
-resolve the field returned {null} or because an error occurred), and that
-field is of a `Non-Null` type, then a field error is thrown. The
-error must be added to the {"errors"} list in the response.
+如果一个字段解析的结果就是{null}（不论是字段的解析函数返回了{null}还是发生了错误），且那个字段是`Non-Null`，那么抛出一个字段错误。这个错误必须添加到响应的{"errors"}列表中。
 
-If the field returns {null} because of an error which has already been added to
-the {"errors"} list in the response, the {"errors"} list must not be
-further affected. That is, only one error should be added to the errors list per
-field.
+如果字段因为错误而返回了{null}，这个错误也被添加到了响应的{"errors"}列表中，这个{"errors"}列表后续就不应被影响，即是，错误列表中一个字段上只允许添加一个错误。
 
-Since `Non-Null` type fields cannot be {null}, field errors are propagated to be
-handled by the parent field. If the parent field may be {null} then it resolves
-to {null}, otherwise if it is a `Non-Null` type, the field error is further
-propagated to it's parent field.
+因为`Non-Null`类型不能为{null}，字段错误将会冒泡到父级字段并被父级字段处理。如果父级字段可能为{null}，那么它就解析为{null}，否则如果父级字段也是`Non-Null`类型，那么这个字段错误将会继续冒泡到上一级父级字段。
 
-If all fields from the root of the request to the source of the error return
-`Non-Null` types, then the {"data"} entry in the response should be {null}.
+如果从请求的根到错误的源的所有字段都返回`Non-Null`条目，那么响应中的{"data"}条目应该为{null}。
